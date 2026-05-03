@@ -2,6 +2,12 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Playwright 設定: PC (Chromium) と iPad Safari (WebKit) を主要プロファイルとする。
 // iPad Safari は 100vh ずれ (R-004) の検証に必須。
+//
+// PLAYWRIGHT_BASE_URL を指定すると外部サーバ (例: docker compose の dev サービス)
+// に対して実行し、内蔵 webServer は起動しない。
+const externalBaseURL = process.env.PLAYWRIGHT_BASE_URL;
+const baseURL = externalBaseURL ?? 'http://localhost:5173';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -10,16 +16,20 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  webServer: {
-    command: 'npm run dev -- --port 5173',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  ...(externalBaseURL
+    ? {}
+    : {
+        webServer: {
+          command: 'npm run dev -- --port 5173',
+          url: 'http://localhost:5173',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
+      }),
   projects: [
     {
       name: 'chromium-pc',

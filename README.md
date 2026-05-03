@@ -201,6 +201,28 @@ npm run test:e2e           # PC + iPad + iPhone プロファイルで実行
 
 詳細: [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md)
 
+### Docker Compose で実行 (Node 環境を汚さない)
+
+ホストに Node を入れずに開発・テストできるよう `Dockerfile` と `docker-compose.yml` を用意しています。
+
+```bash
+# 開発サーバ (http://localhost:5173)
+docker compose up dev
+
+# ワンショットで各種チェック (--profile test 必須)
+docker compose --profile test run --rm test         # Vitest 単体テスト
+docker compose --profile test run --rm typecheck    # tsc --noEmit
+docker compose --profile test run --rm lint         # ESLint
+docker compose --profile test run --rm build        # 本番ビルド (typecheck + vite build)
+
+# E2E (Playwright)。dev サービスを自動起動し http://dev:5173 に対して実行
+docker compose --profile test run --rm e2e
+```
+
+`node_modules` はコンテナ内 named volume (`app_node_modules` / `e2e_node_modules`) に
+隔離されるため、ホスト OS には影響しません。E2E は Playwright 公式イメージ
+(`mcr.microsoft.com/playwright:v1.44.0-jammy`) を使い、Chromium / WebKit ブラウザは同梱済みです。
+
 ---
 
 ## 技術スタック
