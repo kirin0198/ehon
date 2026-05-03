@@ -8,32 +8,32 @@
   --font-display: 'Klee One', 'M PLUS Rounded 1c', sans-serif;
 
   /* 紙・墨 */
-  --paper: #FBF3E0;
-  --paper-2: #F4E6C8;
-  --ink: #3D2F1F;
-  --ink-soft: #6B5742;
+  --paper: #fbf3e0;
+  --paper-2: #f4e6c8;
+  --ink: #3d2f1f;
+  --ink-soft: #6b5742;
 
   /* アクセント (Tweaks で動的差し替え) */
-  --terracotta: #E07856;
-  --terracotta-deep: #C24D2C;
+  --terracotta: #e07856;
+  --terracotta-deep: #c24d2c;
 
   /* 副カラー */
-  --mustard: #E8B53A;
-  --mustard-soft: #F2D88A;
-  --matcha: #7FA886;
-  --matcha-deep: #4F7A57;
-  --sakura: #F2A6B8;
-  --sky: #A9D6E5;
-  --sumi: #2B2419;
+  --mustard: #e8b53a;
+  --mustard-soft: #f2d88a;
+  --matcha: #7fa886;
+  --matcha-deep: #4f7a57;
+  --sakura: #f2a6b8;
+  --sky: #a9d6e5;
+  --sumi: #2b2419;
 
   /* 木目 (ShelfA) */
-  --shelf-wood: #8B5A2B;
-  --shelf-wood-dark: #5C3A1E;
-  --shelf-wood-light: #A87545;
+  --shelf-wood: #8b5a2b;
+  --shelf-wood-dark: #5c3a1e;
+  --shelf-wood-light: #a87545;
 
   /* 夜モード */
-  --night-bg: #1F2440;
-  --night-paper: #2A2F4D;
-  --night-ink: #F5EBD2;
-  --night-ink-soft: #C9BFA8;
+  --night-bg: #1f2440;
+  --night-paper: #2a2f4d;
+  --night-ink: #f5ebd2;
+  --night-ink-soft: #c9bfa8;
 }
