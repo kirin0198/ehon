@@ -9,7 +9,8 @@ export function TweaksLauncher({ onClick, open }: Props) {
     <button
       type="button"
       onClick={onClick}
-      aria-label={open ? 'Tweaks をとじる' : 'Tweaks をひらく'}
+      aria-label="Tweaks せってい"
+      title={open ? 'Tweaks をとじる' : 'Tweaks をひらく'}
       aria-expanded={open}
       style={{
         position: 'fixed',
