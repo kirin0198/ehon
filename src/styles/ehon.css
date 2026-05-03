@@ -1,0 +1,43 @@
+/* Ehon コンポーネント横断スタイル (モック mock/styles/ehon.css から移植)
+ * developer フェーズで本実装と合わせて細部調整する。
+ * 注: モックの :root と ruby/global 部分は tokens.css / global.css に分割済みのため除外。
+ * ここではコンポーネント固有スタイルのみを保持する。
+ */
+
+/* ===================================================================
+   ボタン共通
+   =================================================================== */
+.eh-btn {
+  font-family: inherit;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: var(--terracotta);
+  color: #fff;
+  font-size: 16px;
+  box-shadow: 0 3px 0 var(--terracotta-deep);
+  transition: transform 0.08s, box-shadow 0.08s;
+  user-select: none;
+}
+.eh-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--terracotta-deep); }
+.eh-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--terracotta-deep); }
+.eh-btn:focus-visible { outline: 2px solid var(--terracotta); outline-offset: 2px; }
+.eh-btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
+.eh-btn.ghost:hover { background: rgba(0,0,0,0.05); box-shadow: inset 0 0 0 2px var(--ink-soft); }
+.eh-btn.icon-btn {
+  width: 48px; height: 48px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+
+/* developer フェーズで mock/styles/ehon.css の残りを順次移植する
+ * (Header / ShelfA / ShelfB / Viewer / TweaksPanel / Responsive)。
+ * 移植時はコメントを保持、`/* mock-source: line N-M *​/` のような出典タグ
+ * を必要に応じて付与してトレーサビリティを確保する。
+ */

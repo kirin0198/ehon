@@ -1,0 +1,496 @@
+# UI Specification: えほんやさん（Ehon）
+
+> Source: SPEC.md (2026-05-04)
+> Source: project-rules.md (2026-05-04)
+> Source: モック資産 (`Ehon.html` / `app.jsx` / `tweaks-panel.jsx` / `components/Shelves.jsx` / `components/Viewers.jsx` / `styles/ehon.css`)
+> Created: 2026-05-04
+> Last updated: 2026-05-04
+> Update history:
+>   - 2026-05-04: Initial draft (ux-designer / Delivery Flow Light プラン / lightweight visual default 適用)
+
+## 1. Design Policy
+
+> Visual design follows the **lightweight default** applied because
+> `visual-designer` was not launched in this plan (Light)。ただし本プロジェクトは
+> 既存ハイファイモック（`styles/ehon.css`）が確立したデザイントークン体系を持つため、
+> 一般的な lightweight default の代わりに **モック由来トークン** を採用する。
+> Standard / Full に昇格する場合は `visual-designer` を起動し `VISUAL_SPEC.md` を生成して
+> ここのトークンを正規化する。
+
+### 採用トークン（モック踏襲 / `styles/ehon.css` 由来）
+
+| 区分 | トークン | 値 | 用途 |
+|------|----------|---|------|
+| 紙 | `--paper` | `#FBF3E0` | 主背景（昼） |
+| 紙(濃) | `--paper-2` | `#F4E6C8` | サブ背景・カード背景 |
+| 墨 | `--ink` | `#3D2F1F` | 主テキスト（昼） |
+| 墨(柔) | `--ink-soft` | `#6B5742` | 補助テキスト |
+| アクセント | `--terracotta` | `#E07856` | 主アクセント（CTA, 進捗バー, ボタン） |
+| アクセント(濃) | `--terracotta-deep` | `#C24D2C` | ボタン下影 |
+| 黄 | `--mustard` | `#E8B53A` | 夜モード主アクセント、バッジ |
+| 黄(柔) | `--mustard-soft` | `#F2D88A` | テープ装飾 |
+| 抹茶 | `--matcha` | `#7FA886` | 副カラー |
+| 抹茶(濃) | `--matcha-deep` | `#4F7A57` | 副カラー濃 |
+| 桜 | `--sakura` | `#F2A6B8` | 副カラー |
+| 空 | `--sky` | `#A9D6E5` | 副カラー |
+| 濃墨 | `--sumi` | `#2B2419` | 夜モード上の文字 |
+| 木 | `--shelf-wood` 系 | `#8B5A2B` 他 | ShelfA 木製本棚 |
+| 夜・背景 | `--night-bg` | `#1F2440` | 夜モード主背景 |
+| 夜・紙 | `--night-paper` | `#2A2F4D` | 夜モードカード |
+| 夜・墨 | `--night-ink` | `#F5EBD2` | 夜モード主テキスト |
+| 夜・墨(柔) | `--night-ink-soft` | `#C9BFA8` | 夜モード補助テキスト |
+
+> 夜モード `--mustard` (#E8B53A) と `--night-bg` (#1F2440) のコントラスト検証が
+> NFR の TBD-002。本実装の visual 検証フェーズで実測する。
+
+### タイポグラフィ
+
+- ボディ既定 (`--font-body`): `'M PLUS Rounded 1c', 'BIZ UDPGothic', system-ui, sans-serif`
+- ディスプレイ既定 (`--font-display`): `'Klee One', 'M PLUS Rounded 1c', sans-serif`
+- 読み込みは Google Fonts (`display=swap`)。失敗時は `system-ui` フォールバック（IR-003）
+- フォントプリセット 6 種は `app.jsx` の `FONT_PRESETS` を移植 (rounded / udp / klee / pop / maru / mincho)
+
+### スペーシング・形状
+
+- 基本グリッド: 8px (4 / 8 / 12 / 14 / 16 / 18 / 20 / 22 / 24 / 28 / 32 / 40 / 60 / 80 px)
+- 角丸: ボタン 999px (pill) / カード 6〜18px / 入力 4px
+- 影: ボタン下影 `0 3px 0 var(--terracotta-deep)`、カード `0 12px 24px rgba(0,0,0,0.18)`、ビュアー `0 30px 60px rgba(0,0,0,0.18)`
+- 線太さ: ボーダー 1.5〜3px
+
+### アクセシビリティ
+
+- 目標水準: WCAG 2.1 AA（コントラスト 4.5:1）
+- フォーカスリング: `outline: 2px solid var(--terracotta); outline-offset: 2px;`（実装側で全インタラクティブ要素に適用）
+- タップ領域: 最小 44×44px
+- `prefers-reduced-motion: reduce` で `flipNextLeft` / `floaty` / `slideInRight` / `viewerIn` 等のアニメ無効化
+- `<ruby>` 構造は CSS で `<rt>` の `display` のみ切替、SR 互換性を維持
+
+### レスポンシブ・ブレークポイント
+
+- PC: ≥ 901px (主要ターゲット)
+- タブレット: ≤ 900px (主要ターゲット)
+- スマホ: ≤ 560px (下位互換)
+
+### Tone & Manner
+
+- やわらか / あたたかい / 子ども（3〜5歳）が安心して触れる
+- 過度な装飾を避け、絵本の物理感（紙・木・テープ）を控えめに表現
+
+---
+
+## 2. Screen Transition Flow
+
+```mermaid
+flowchart LR
+  Home[SCR-001 本棚<br/>ShelfA or ShelfB] -->|表紙クリック / Enter / タップ| Viewer[SCR-002 ビュアー<br/>ViewerA or ViewerB]
+  Viewer -->|Esc / × / 外側クリック| Home
+  Home -->|Tweaks ボタン| Tweaks[SCR-003 Tweaks パネル<br/>右下 sticky overlay]
+  Viewer -->|Tweaks ボタン| Tweaks
+  Tweaks -->|閉じる| Home
+  Tweaks -->|閉じる| Viewer
+  Home -.->|タグフィルター内変化のみ| Home
+  Viewer -.->|ページ送り内変化のみ| Viewer
+```
+
+> 物理スクリーンは 2 つ (Home / Viewer)、論理オーバーレイは 1 つ (Tweaks Panel)。
+> ページ送りは Viewer 内の状態変化のため SCR を分けない。
+> URL ルーティングは存在しない（FR-020 / UC-019 が Could 採用なら `?shelf=B&viewer=A&open={id}` のクエリパラメータのみ）。
+
+---
+
+## 3. Screen List
+
+| Screen ID | Screen Name | Corresponding UC | URL Path | Description |
+|----------|------------|------------------|----------|------------|
+| SCR-001 | 本棚（Home） | UC-001 〜 UC-004, UC-016, UC-017 | `/` (オプション: `?shelf=A\|B&tag=...`) | 物語一覧。ShelfA / ShelfB バリアント切替、タグフィルター |
+| SCR-002 | ビュアー（Viewer） | UC-005 〜 UC-011, UC-016, UC-017, UC-018 | `/` （Home オーバーレイ） | 物語を読む画面。ViewerA / ViewerB バリアント切替、表紙ページ + 本文ページ |
+| SCR-003 | Tweaks パネル | UC-009 〜 UC-014, UC-015 | （オーバーレイ） | 設定一括操作。Home / Viewer どちらからも開ける |
+
+---
+
+## 4. Screen Details
+
+### SCR-001: 本棚（Home）
+
+**Purpose:** 6 作品の物語を一覧表示し、タグで絞り込み、選んでビュアーへ遷移する
+**Corresponding UC:** UC-001 〜 UC-004, UC-016, UC-017
+**Transitions:** （初期画面）→ ビュアー (SCR-002) / Tweaks (SCR-003)
+**URL path:** `/`（オプション: `?shelf=A|B`）
+
+#### Layout Structure (ShelfA: 立てかけ書架)
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ ┌─────────┐  えほんやさん                              ┌─────────────┐│
+│ │  本     │  Ehon — よみたいおはなしを えらんでね      │ほんだな A|B ││
+│ └─────────┘                                            └─────────────┘│
+├───────────────────────────────────────────────────────────────────────┤
+│   きょうは どのおはなしを よもうかな？                                │
+│   本のせなかを タップすると、おはなしがはじまります                   │
+│                                                                       │
+│ ┌──────────────────────────────────────────────────────────────────┐  │
+│ │ おはなしの しゅるい [ ぜんぶ | グリム童話 | 日本昔話 ]           │  │
+│ └──────────────────────────────────────────────────────────────────┘  │
+│                                                                       │
+│ ╔═══════════════════════════════════════════════════════════════════╗ │
+│ ║ ▓▓ ▓▓ ▓▓ ▓▓ ▓▓ ▓▓ (背表紙: 縦書きタイトル + 絵文字)           ▒ ║ │
+│ ║ ▓▓ ▓▓ ▓▓ ▓▓ ▓▓ ▓▓                                             ▒ ║ │
+│ ║ ▓▓ ▓▓ ▓▓ ▓▓ ▓▓ ▓▓                                             ▒ ║ │
+│ ║━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━║ │
+│ ║                            (床板)                                ║ │
+│ ╚═══════════════════════════════════════════════════════════════════╝ │
+└───────────────────────────────────────────────────────────────────────┘
+                                          [Tweaks 設定 ⚙ ]  ← 右下 sticky
+```
+
+#### Layout Structure (ShelfB: 表紙ならべ)
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ ┌─────────┐  えほんやさん                              ┌─────────────┐│
+│ │  本     │  Ehon — おやすみまえの よみきかせに        │ほんだな A|B ││
+│ └─────────┘                                            └─────────────┘│
+├───────────────────────────────────────────────────────────────────────┤
+│  ようこそ                                                             │
+│  きょうの おはなし を えらぼう              6 さつの えほん            │
+│                                                                       │
+│  おはなしの しゅるい [ ぜんぶ | グリム童話 | 日本昔話 ]              │
+│                                                                       │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐                    │
+│  │  🧣     │ │  🍑     │ │  👸     │ │  🦢     │                    │
+│  │ 赤ずきん │ │ 桃太郎  │ │ 白雪姫  │ │つるの…  │                    │
+│  │グリム童話│ │日本昔話 │ │グリム童話│ │日本昔話 │                    │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘                    │
+│  ┌─────────┐ ┌─────────┐                                             │
+│  │  🐓     │ │  🪔     │                                             │
+│  │ ブレ…   │ │ かさじぞう│                                            │
+│  │グリム童話│ │日本昔話 │                                             │
+│  └─────────┘ └─────────┘                                             │
+└───────────────────────────────────────────────────────────────────────┘
+                                          [Tweaks 設定 ⚙ ]  ← 右下 sticky
+```
+
+#### Component Details
+
+| # | Component | Type | State | 説明 |
+|---|-----------|------|-------|------|
+| 1 | `<Header>` | layout | static | ロゴマーク (52×52, 角丸, 4° 傾き) + サービス名「えほんやさん」+ サブテキスト「Ehon — …」 |
+| 2 | `<ShelfSwitcher>` | toggle pill | active / inactive | 「ほんだな」ラベル + ［📚 立てかけ / 🗂 表紙ならべ］。Tweaks 永続化 |
+| 3 | `<TagFilter>` | segmented control | selected / unselected | "ぜんぶ" + 各タグの単一選択。タグは `collectTags(stories)` で動的列挙（MVP では「グリム童話」「日本昔話」） |
+| 4 | `<ShelfA>` 本棚エリア | composite | n/a | 木目背景 + 並んだ背表紙 + 床板 + 装飾(ランプ等)。本棚高さは中身に応じて可変 |
+| 5 | `<BookSpine>` (ShelfA 内) | clickable card | default / hover (translateY -12px, rotate -2°) / focus / disabled | 縦書きタイトル + 下部絵文字。物語の `spine` 色を背景。クリックで `onOpen(id)`。`role="button"`, `aria-label="{title} をひらく"` |
+| 6 | `<ShelfB>` グリッド | composite | n/a | `auto-fill, minmax(220px, 1fr)` 列、gap 28px |
+| 7 | `<CoverCard>` (ShelfB 内) | clickable card | default / hover (translateY -6px) / focus | 3:4 縦長カバー + 著者バッジ + 中央絵文字 + 表題。下にメタ（タイトル + description + ミニタグ） |
+| 8 | `<EmptyState>` | message | shown when filtered.length === 0 | 「🔍 このタグの えほんは まだないよ」 |
+| 9 | `<TweaksLauncher>` | floating button | default / hover | 右下 sticky の ⚙ ボタン。クリックで Tweaks パネル展開 |
+
+#### Interactions
+
+| Trigger | Action | Feedback |
+|---------|--------|----------|
+| 表紙(背表紙)クリック / タップ / Enter | `onOpen(story.id)` → `<Viewer>` をオーバーレイ表示 | viewerIn 0.35s ease（reduced-motion で停止） |
+| 表紙にフォーカス（Tab） | `outline: 2px solid var(--terracotta); outline-offset: 2px` | フォーカス後 Enter で開く |
+| ShelfSwitcher 切替 | `tweaks.shelfVariant` 更新 + localStorage 反映 | アクティブピル背景反転 (墨 → 紙)、即時レイアウト切替 |
+| タグチップ選択 | `selectedTags = [tagName]` (単一)、"" は空配列 | チップ active 反転 (terracotta 背景 + 白文字) |
+| TweaksLauncher | パネル開閉 | パネル右からスライドイン |
+| ホバー (PC) | カードリフトアニメーション | `@media (hover: none)` で抑制 |
+
+#### State Patterns
+
+| State | 条件 | 表示 |
+|-------|------|------|
+| Default | `filteredStories.length > 0` | ShelfA: 並んだ背表紙、ShelfB: 表紙グリッド |
+| Empty | `filteredStories.length === 0` | EmptyState メッセージ |
+| Night | `tweaks.night === true` | `.night` クラス付与、palette を夜パレットに切替 |
+| Loading | （MVP では不要 / 全静的） | — |
+| Error | （MVP では不要 / Error Boundary は IR-008 で別系統） | — |
+
+---
+
+### SCR-002: ビュアー（Viewer）
+
+**Purpose:** 選択された物語を表紙 → 本文の順で読み進める
+**Corresponding UC:** UC-005 〜 UC-011, UC-016, UC-017, UC-018
+**Transitions:** ← 本棚 (SCR-001) / → Tweaks (SCR-003)
+**URL path:** `/`（Home オーバーレイ。オプション: `?open={storyId}&page={N}` を Could で許容）
+
+#### Layout Structure (ViewerA: 見開き)
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ ◀ 赤ずきん [グリム童話]    ふりがな[ON] あ-あ+ 夜モード A|B  ✕ 閉じる │
+├───────────────────────────────────────────────────────────────────────┤
+│ ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░ (進捗バー 4px, 紅褐色)              │
+├───────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│   ╔═════════════╤═════════════╗                                       │
+│   ║             │             ║                                       │
+│   ║   (左:絵)   │ (右:本文)   ║                                       │
+│   ║   illust    │ むかしむかし、 ║◀━━━━━ 56px 円形 ▶                  │
+│   ║   140px     │ あるところに… ║                                     │
+│   ║             │             ║                                       │
+│   ║             │       3/8   ║                                       │
+│   ╚═════════════╧═════════════╝                                       │
+│                       page 3 / 8                                      │
+└───────────────────────────────────────────────────────────────────────┘
+                                          [Tweaks 設定 ⚙ ]
+```
+
+#### Layout Structure (ViewerB: 全画面背景)
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│ ◀ 赤ずきん [グリム童話]    ふりがな[ON] あ-あ+ 夜モード A|B  ✕ 閉じる │
+├───────────────────────────────────────────────────────────────────────┤
+│ ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░ (進捗バー 4px)                       │
+│                                                                       │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │                                                                  │ │
+│  │                  ◯  (background image full-bleed                 │ │
+│  │                          OR floaty emoji 280px)                  │ │
+│  │                                                                  │ │
+│  │                                                                  │ │
+│  │             ┌─────── テープ ───────┐                             │ │
+│  │             │ むかしむかし、あるところに… │                        │ │
+│  │             │ (textcard, 紙色 + 影 + テープ装飾)                 │ │
+│  │             └────────────────────────┘                          │ │
+│  │                                                                  │ │
+│  │                       page 3 / 8                                 │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+│  ◀ (左 56px 円形)                              ▶ (右 56px 円形)       │
+└───────────────────────────────────────────────────────────────────────┘
+```
+
+#### 表紙ページ（pageIndex === 0, 両バリアント共通）
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                  (背景: cover.webp eager OR coverColor 色面)         │
+│                                                                      │
+│                            🧣                                        │
+│                          赤ずきん                                    │
+│                       グリム童話                                     │
+│                                                                      │
+│                   [ よみはじめる ]   ← 白丸ボタン 12×32, 太字        │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+#### Component Details
+
+| # | Component | Type | State | 説明 |
+|---|-----------|------|-------|------|
+| 1 | `<ViewerBar>` | top toolbar | static | タイトル + 著者バッジ / ふりがなトグル / 文字サイズ ± / 夜モード / ViewerSwitcher A|B / 閉じる ✕ |
+| 2 | `<ProgressBar>` | progress | width: pageIndex / pages.length | 4px 高、`--terracotta`（夜は `--mustard`） |
+| 3 | `<ViewerStage>` | content area | per page | ViewerA: `<BookA>` 見開き / ViewerB: `<BookB>` 全画面背景。表紙 (pageIndex=0) は両バリアント共通の `<CoverOverlay>` |
+| 4 | `<NavButton>` | circular button | default / hover (scale 1.07) / disabled (opacity 0.25) | 56×56px (PC) / 44×44px (タブレット) / 38×38px (スマホ)。`aria-label="まえのページ" / "つぎのページ"` |
+| 5 | `<PageNumber>` | label | 表示は本文のみ | `{n} / {total}` 表示。表紙ページでは非表示 |
+| 6 | `<CoverPage>` | composite | pageIndex === 0 | 物語タイトル(大) + 著者 + 「よみはじめる」CTA。背景は `cover.webp`(eager) or `coverColor` 色面 |
+| 7 | `<IllustWithFallback>` | image | loaded / fallback | `<img src="/illustrations/{id}/{scene}.webp" loading="lazy" onError={fallback}>`。エラー時は `placeholderEmoji` + `bg` 色面に切替 |
+| 8 | `<RubyText>` | inline composite | ruby on / off | `桃太郎{ももたろう}` を `<ruby><rb>...</rb><rt>...</rt></ruby>` に変換。off 時 `.no-ruby rt { display:none }` |
+
+#### Interactions
+
+| Trigger | Action | Feedback |
+|---------|--------|----------|
+| 「よみはじめる」CTA タップ / Enter | `pageIndex = 1` | viewerIn / slideInRight アニメ（reduced-motion で停止） |
+| ▶ ボタン / → キー / 画面右半分タップ | `pageIndex++` (max: pages.length-1) | flipNextLeft (A) / slideInRight (B) |
+| ◀ ボタン / ← キー / 画面左半分タップ | `pageIndex--` (min: 0) | flipPrevRight (A) / slideInLeft (B) |
+| Esc キー / ✕ ボタン | `onClose()` → 本棚へ戻る | viewer フェードアウト、本棚スクロール位置保持 |
+| ふりがなトグル | `tweaks.ruby` トグル | `<rt>` 即時表示切替 |
+| あ- / あ+ ボタン | `tweaks.fontSize` ±2 (16〜36) | 本文文字即時拡縮 |
+| 夜モードトグル | `tweaks.night` トグル | 全画面の `.night` クラス切替（昼夜パレット遷移） |
+| ViewerSwitcher A|B | `tweaks.viewerVariant` 切替 | レイアウト即時切替（pageIndex 保持） |
+| ビュアー入場時 | フォーカスを `<NavButton.next>` または「よみはじめる」CTA に移動 | キーボードユーザビリティ (IR-007) |
+| ビュアー離脱時 | フォーカスを直前にクリックされた表紙要素へ復帰 | 同上 |
+
+#### Validation
+
+該当なし（フォーム入力なし）。
+
+#### State Patterns
+
+| State | 条件 | 表示 |
+|-------|------|------|
+| Cover | `pageIndex === 0` | `<CoverPage>` 表示、← ボタン disabled |
+| Reading | `0 < pageIndex < pages.length-1` | 通常ページ表示、両ナビ有効 |
+| Last page | `pageIndex === pages.length-1` | → ボタン disabled、最終ページ表示 |
+| Image fallback | 画像取得失敗 | `<IllustWithFallback>` が `placeholderEmoji` + `bg` 色面に切替（UC-018） |
+| Night | `tweaks.night === true` | 夜パレットに切替 |
+| Reduced motion | `prefers-reduced-motion: reduce` | 全アニメーションを停止 / 短縮 |
+| Viewer transition | バリアント切替直後 | レイアウトのみ切替、ページは保持 |
+
+---
+
+### SCR-003: Tweaks パネル
+
+**Purpose:** 全ユーザー設定を 1 つのパネルから一括操作する
+**Corresponding UC:** UC-009 〜 UC-014, UC-015
+**Transitions:** Home / Viewer 上のオーバーレイ
+**URL path:** （オーバーレイ）
+
+#### Layout Structure
+
+```
+                                              ┌─────────────────────┐
+                                              │ Tweaks         × |  │
+                                              ├─────────────────────┤
+                                              │ レイアウト           │
+                                              │  本棚    ◉ A  ○ B   │
+                                              │  ビュアー ◉ A  ○ B  │
+                                              ├─────────────────────┤
+                                              │ よみやすさ           │
+                                              │  ふりがな (ルビ) [ON]│
+                                              │  もじサイズ          │
+                                              │  ━━━━━●━━━━━ 22 px  │
+                                              │  夜モード        [○]│
+                                              ├─────────────────────┤
+                                              │ 色                  │
+                                              │  アクセント          │
+                                              │  ●  ●  ●  ●         │
+                                              ├─────────────────────┤
+                                              │ フォント             │
+                                              │  [▼ やわらか丸ゴシ ] │
+                                              └─────────────────────┘
+                                              （右下 sticky / 折畳可能）
+```
+
+#### Component Details
+
+| # | Component | Type | State | 説明 |
+|---|-----------|------|-------|------|
+| 1 | `<TweakSection>` | grouping | static | カテゴリ見出し + 子要素を縦積み |
+| 2 | `<TweakRadio>` | radio segment | selected / not | 「本棚 A/B」「ビュアー A/B」用 |
+| 3 | `<TweakToggle>` | switch | on / off | 「ふりがな」「夜モード」用、`role="switch"` + `aria-checked` |
+| 4 | `<TweakSlider>` | slider | value 16〜36 step 2 | 文字サイズ。`<input type="range">` ベース、`aria-valuemin/max/now` |
+| 5 | `<TweakColor>` | color swatches | selected | アクセント色 4 色から選択（モック CSS の `--terracotta`/`--matcha-deep`/`--sky` 系から候補抽出 → TBD-001） |
+| 6 | `<TweakSelect>` | dropdown | selected | フォント 6 プリセット選択 (`<select>` ベース、ラベル日本語) |
+| 7 | パネルクローズ | button | static | × ボタン（44×44px） |
+
+#### Interactions
+
+| Trigger | Action | Feedback |
+|---------|--------|----------|
+| 各設定の操作 | 該当 `tweaks.{key}` を即更新 → localStorage 永続化 | UI 即時反映、サブミットボタンなし |
+| × ボタン / 外側クリック | パネル閉じ | スライドアウト |
+| Esc キー | パネル閉じ | スライドアウト |
+
+#### State Patterns
+
+| State | 条件 | 表示 |
+|-------|------|------|
+| Closed | 既定 | 右下 ⚙ ボタンのみ表示 |
+| Open | ⚙ クリック後 | フローティングパネル表示 |
+| Persistence error | localStorage 書込失敗 | サイレント無視 + `console.warn`（IR-002 / R-003） |
+| Night | `tweaks.night === true` | パネル背景を夜パレット適用 |
+
+---
+
+## 5. Shared Components
+
+| Component | 用途 | Props 概念 |
+|-----------|------|-----------|
+| `<Logo>` | ヘッダー左、サービス名表示 | （なし。サブテキストはバリアントで切替） |
+| `<ShelfSwitcher>` | 本棚バリアント切替 | `value: "A"\|"B"`, `onChange`, `night` |
+| `<ViewerSwitcher>` | ビュアーバリアント切替 | `value: "A"\|"B"`, `onChange`, `night` |
+| `<TagFilter>` | タグ単一選択 | `tags`, `selected`, `setSelected`, `variant`, `night` |
+| `<RubyText>` | ルビ記法を `<ruby>` に変換 | `text` (`漢字{かんじ}`形式) |
+| `<IllustWithFallback>` | 挿絵 + フォールバック | `storyId`, `scene`, `placeholderEmoji`, `bgColor`, `eager?` |
+| `<TweaksLauncher>` | 右下 ⚙ フローティングボタン | `onClick`, `night` |
+| `<TweaksPanel>` | 設定パネル本体 | `open`, `onClose`, children (`TweakSection`...) |
+| `<EhButton>` | 共通ボタン (`.eh-btn`, `.eh-btn.ghost`, `.eh-btn.icon-btn`) | `variant`, `onClick`, `aria-label` |
+| `<EmptyState>` | 空タグ時メッセージ | `message` |
+| `<ProgressBar>` | ビュアー進捗バー | `value` (0〜1) |
+| `<ErrorBoundary>` | クラッシュ時フォールバック (IR-008) | `fallback` |
+
+---
+
+## 6. Responsive Design Policy（per screen specifics）
+
+正規ブレークポイントは Section 1 を参照（PC ≥ 901 / タブレット ≤ 900 / スマホ ≤ 560）。
+画面ごとの挙動差分:
+
+### SCR-001 (本棚)
+- **タブレット (≤900px)**: ヘッダー padding 削減、ロゴ 24px、`<ShelfSwitcher>` ラベルのみ非表示にし icon+text 残す。ShelfA は本棚エリアを横スクロールに切替。ShelfB grid は `minmax(150px, 1fr)`
+- **スマホ (≤560px)**: ロゴサブテキスト非表示、ロゴ 20px、ShelfA 背表紙幅 54px、ShelfB grid `repeat(2, 1fr)`、タグフィルタは横スクロール
+
+### SCR-002 (ビュアー)
+- **タブレット (≤900px)**: バー padding 削減、ナビボタン 44px、ViewerA 見開きを縦積み (左 38% / 右 62%)
+- **スマホ (≤560px)**: バー高圧縮、タイトルバッジ非表示、ナビボタン 38px (opacity 0.85)、ViewerA 見開きを左 32%/右 68%、ViewerB の本文カードを画面端いっぱいに、表紙タイトル 32px
+
+### SCR-003 (Tweaks)
+- **タブレット**: パネル幅 max 320px、右下から下端から 16px、コンテンツスクロール
+- **スマホ**: パネルをフルスクリーンモーダルに変換（重要：右下 sticky だと小画面で本文を覆う）
+
+### iPad Safari `100vh` ずれ（R-004）対策
+- すべての画面で `100dvh`（フォールバック `100vh`）を採用
+- ビュアーは `position: fixed; inset: 0; height: 100dvh;`
+
+### `@media (hover: none)`
+- カードリフト・背表紙ホバーアニメを停止（モック既存 CSS 踏襲）
+
+---
+
+## 7. Accessibility Requirements（per screen specifics）
+
+正規水準は Section 1 を参照（WCAG 2.1 AA）。画面ごとの追加要件:
+
+### SCR-001 (本棚)
+- 各表紙には `role="button"` + `aria-label="{title} をひらく"`
+- タグチップは `role="radio"` + `aria-checked` で単一選択を表現（`role="radiogroup"` でラップ）
+- ShelfSwitcher は `role="tablist"` + `aria-selected` を採用
+
+### SCR-002 (ビュアー)
+- ビュアー root に `role="dialog"` + `aria-modal="true"` + `aria-labelledby` でタイトル参照
+- ナビボタン: `aria-label="まえのページ" / "つぎのページ"` + 末端ページで `aria-disabled`
+- 進捗バー: `role="progressbar"` + `aria-valuenow / valuemin / valuemax`
+- 本文の `<ruby>` 構造を維持し、SR が「漢字 → 読み」の順に読み上げる挙動を VoiceOver / NVDA で検証
+- フォーカス管理: 開いた瞬間に「よみはじめる」CTA(表紙) または 次ボタン(本文)に移動。閉じた時、トリガー要素に復帰 (IR-007)
+
+### SCR-003 (Tweaks)
+- パネルに `role="dialog"` + `aria-labelledby="tweaks-title"`
+- 各操作要素に明示的な `<label>` または `aria-labelledby`
+- スライダーは `aria-valuetext="22 ピクセル"` 等で値を音声化
+
+### 共通
+- すべてのインタラクティブ要素に `:focus-visible` で 2px outline (terracotta)
+- タップ領域 ≥ 44×44px（モック CSS が一部 56×56px 採用）
+- `prefers-reduced-motion: reduce` で `flipNextLeft` / `floaty` / `slideInRight` / `viewerIn` 等を無効化
+- 夜モード `--mustard` のコントラストは visual 検証フェーズで実測 → 4.5:1 未達なら代替色を導入（TBD-002 / R-001）
+
+---
+
+## 8. Animations / Transitions
+
+| 名前 | 適用先 | duration | easing | reduced-motion |
+|------|--------|----------|--------|----------------|
+| `viewerIn` | ビュアー入場 | 0.35s | ease | 停止 (opacity 即時 1) |
+| `flipNextLeft` | ViewerA 次ページ | 0.55s | ease-in | 停止 (即時切替) |
+| `flipNextRightFade` | ViewerA 次ページ右フェード | 0.55s | ease-out | 停止 |
+| `flipPrevRight` | ViewerA 前ページ | 0.55s | ease-in | 停止 |
+| `slideInRight` | ViewerB 次ページ背景 | 0.5s | ease | 停止 |
+| `slideInRightCard` | ViewerB 次ページカード | 0.5s | ease | 停止 |
+| `slideInLeft` / `slideInLeftCard` | ViewerB 前ページ | 0.5s | ease | 停止 |
+| `floaty` | ViewerB 背景 emoji | 4s infinite | ease-in-out | 停止（位置固定） |
+| カードホバーリフト | ShelfA / ShelfB | 0.2s | ease | 停止（hover: none） |
+| ページめくりアニメ全般 | ViewerA / ViewerB | — | — | `@media (prefers-reduced-motion: reduce)` で `animation: none` |
+
+> CSS は `styles/ehon.css` の `@keyframes` をそのまま `src/styles/` に移植する。
+> reduced-motion 対応は新規追加: `@media (prefers-reduced-motion: reduce) { .book-a, .book-b, .eh-viewer, .book-b-bg-emoji { animation: none !important; transform: none !important; } }`
+
+---
+
+## AGENT_RESULT
+
+```
+AGENT_RESULT: ux-designer
+STATUS: success
+ARTIFACTS:
+  - docs/UI_SPEC.md
+SCREENS: 3
+COMPONENTS: 12
+RESPONSIVE: true
+ACCESSIBILITY: WCAG AA
+VISUAL_POLICY: lightweight-default (mock-derived tokens)
+NEXT: architect
+```

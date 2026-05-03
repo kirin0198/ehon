@@ -1,0 +1,29 @@
+/* prefers-reduced-motion: reduce ユーザーへのアニメーション無効化 (R-006)
+ * すべての viewer/shelf アニメーションを停止する。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .eh-viewer,
+  .book-a,
+  .book-b,
+  .book-b-bg-emoji,
+  .shelf-a-book,
+  .shelf-b-card,
+  .eh-viewer-nav {
+    animation: none !important;
+    transition: none !important;
+  }
+  .book-a-page.left,
+  .book-a-page.right,
+  .book-b-bg,
+  .book-b-text-card {
+    animation: none !important;
+  }
+}
+
+/* タッチデバイス: hover を抑制 */
+@media (hover: none) {
+  .shelf-a-book:hover,
+  .shelf-b-card:hover {
+    transform: none;
+  }
+}

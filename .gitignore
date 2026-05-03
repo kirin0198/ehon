@@ -1,0 +1,36 @@
+# Node / pnpm / npm
+node_modules/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# Vite / build
+dist/
+dist-ssr/
+*.local
+
+# Test
+coverage/
+playwright-report/
+test-results/
+.vitest-cache/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Env (Hook B が書き込みもブロックするが念のため)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Aphelion local override
+.aphelion-auto-approve
+.telescope-auto-approve

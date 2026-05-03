@@ -1,0 +1,53 @@
+/* グローバルリセット + ふりがな (ruby) スタイル */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#app {
+  width: 100vw;
+  height: 100dvh; /* iPad Safari 対策 (R-004) */
+  overflow: hidden;
+}
+
+/* ふりがな (ruby) — DOM 構造は維持し、CSS で <rt> 表示のみ切替 */
+ruby {
+  ruby-align: center;
+}
+
+rt {
+  font-size: 0.5em;
+  font-weight: 500;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
+/* tweaks.ruby === false のときルート要素に .no-ruby を付与する */
+.no-ruby rt {
+  display: none;
+}
+
+/* スクロールバー (装飾) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

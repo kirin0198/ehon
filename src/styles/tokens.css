@@ -1,0 +1,39 @@
+/* デザイントークン (CSS Custom Properties)
+ * モック (mock/styles/ehon.css) の :root 変数を踏襲。
+ * フォント変数は src/stores/tweaks-context.tsx が動的に書き換える。
+ */
+:root {
+  /* フォント (Tweaks で動的差し替え) */
+  --font-body: 'M PLUS Rounded 1c', 'BIZ UDPGothic', system-ui, sans-serif;
+  --font-display: 'Klee One', 'M PLUS Rounded 1c', sans-serif;
+
+  /* 紙・墨 */
+  --paper: #FBF3E0;
+  --paper-2: #F4E6C8;
+  --ink: #3D2F1F;
+  --ink-soft: #6B5742;
+
+  /* アクセント (Tweaks で動的差し替え) */
+  --terracotta: #E07856;
+  --terracotta-deep: #C24D2C;
+
+  /* 副カラー */
+  --mustard: #E8B53A;
+  --mustard-soft: #F2D88A;
+  --matcha: #7FA886;
+  --matcha-deep: #4F7A57;
+  --sakura: #F2A6B8;
+  --sky: #A9D6E5;
+  --sumi: #2B2419;
+
+  /* 木目 (ShelfA) */
+  --shelf-wood: #8B5A2B;
+  --shelf-wood-dark: #5C3A1E;
+  --shelf-wood-light: #A87545;
+
+  /* 夜モード */
+  --night-bg: #1F2440;
+  --night-paper: #2A2F4D;
+  --night-ink: #F5EBD2;
+  --night-ink-soft: #C9BFA8;
+}
