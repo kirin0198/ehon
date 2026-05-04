@@ -7,15 +7,14 @@ import { STORIES } from '../../src/data/stories';
 
 const story = STORIES[0]; // 赤ずきん, pages 7
 
+// 本番固定化 (2026-05-04) により fontSize / setFontSize props を削除
 function setup(overrides: Partial<Parameters<typeof ViewerA>[0]> = {}) {
   const props = {
     story,
     onClose: vi.fn(),
     ruby: true,
-    fontSize: 22,
     night: false,
     setRuby: vi.fn(),
-    setFontSize: vi.fn(),
     setNight: vi.fn(),
     variant: 'A' as const,
     setVariant: vi.fn(),
@@ -73,15 +72,6 @@ describe('ViewerA', () => {
     const { container } = setup({ night: true });
     const root = container.querySelector('.eh-viewer');
     expect(root!.classList.contains('night')).toBe(true);
-  });
-
-  it('文字サイズ ± で setFontSize が呼ばれる', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    const { props } = setup({ fontSize: 22 });
-    await user.click(screen.getByRole('button', { name: '文字を大きく' }));
-    expect(props.setFontSize).toHaveBeenCalledWith(24);
-    await user.click(screen.getByRole('button', { name: '文字を小さく' }));
-    expect(props.setFontSize).toHaveBeenCalledWith(20);
   });
 
   it('閉じるボタンで onClose 呼出', async () => {

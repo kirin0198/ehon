@@ -1,4 +1,6 @@
 // TC-TP: TweaksPanel のテスト
+// 本番固定化 (2026-05-04) により 2 セクション (レイアウト/よみやすさ) 構成に修正。
+// 「色」「フォント」セクションの検証を削除。
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -30,7 +32,7 @@ describe('TweaksPanel', () => {
     expect(screen.getByRole('button', { name: 'Tweaks をとじる' })).toBeInTheDocument();
   });
 
-  it('TC-TP-003 4 セクション (レイアウト/よみやすさ/色/フォント) を描画', () => {
+  it('TC-TP-003 2 セクション (レイアウト/よみやすさ) を描画', () => {
     render(
       <TweaksProvider>
         <TweaksPanel open={true} onClose={() => {}} />
@@ -40,8 +42,19 @@ describe('TweaksPanel', () => {
     const titles = headings.map((h) => h.textContent);
     expect(titles).toContain('レイアウト');
     expect(titles).toContain('よみやすさ');
-    expect(titles).toContain('色');
-    expect(titles).toContain('フォント');
+    // 削除されたセクションが存在しないことを確認
+    expect(titles).not.toContain('色');
+    expect(titles).not.toContain('フォント');
+  });
+
+  it('TC-TP-004 4 つの操作要素 (本棚/ビュアー/ふりがな/夜モード) のみ存在する', () => {
+    render(
+      <TweaksProvider>
+        <TweaksPanel open={true} onClose={() => {}} />
+      </TweaksProvider>,
+    );
+    // 文字サイズスライダーが存在しない
+    expect(screen.queryByRole('slider')).toBeNull();
   });
 
   it('TC-TP-005 Esc キーで onClose 呼出', () => {
