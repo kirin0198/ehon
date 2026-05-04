@@ -1,0 +1,36 @@
+// TC-E2E-001: 本棚 → 物語選択 → 表紙 → 全ページ閲覧 → 戻る
+import { test, expect } from '@playwright/test';
+
+test('home: 本棚 → 物語 → 表紙 → 全ページ → 戻る が完遂する', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText(/きょうは どのおはなしを よもうかな/)).toBeVisible();
+
+  // 赤ずきん を開く
+  await page.getByRole('button', { name: '赤ずきん をひらく' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+
+  // CTA「よみはじめる」(複数候補があるので first)
+  await page
+    .getByRole('button', { name: /よみはじめる/ })
+    .first()
+    .click();
+
+  // 全ページめくる (赤ずきん: pages.length=7 → 表紙 + 7 = 8 ページ)
+  // 表紙の「よみはじめる」CTA で pageIndex=0→1 が済んでいるため、残り 6 回で最終ページ
+  // フリップロック中はボタンが disabled になる (isFlipping state) ので、
+  // toBeEnabled() でロック解除を待ってから click する (時間ベースの waitForTimeout より堅牢)
+  const nextBtn = page.getByRole('button', { name: 'つぎのページ' });
+  for (let i = 0; i < 6; i++) {
+    await expect(nextBtn).toBeEnabled({ timeout: 3000 });
+    await nextBtn.click();
+  }
+
+  // 最終ページで「つぎのページ」が disabled
+  await expect(nextBtn).toBeDisabled();
+
+  // 戻る
+  await page.getByRole('button', { name: 'ほんだなへもどる' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText(/きょうは どのおはなしを よもうかな/)).toBeVisible();
+});
