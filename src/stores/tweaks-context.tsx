@@ -28,10 +28,8 @@ const TweaksContext = createContext<TweaksContextValue | null>(null);
 export function TweaksProvider({ children }: { children: ReactNode }) {
   // lazy initializer で初回レンダー時に既に localStorage 復元済みにする。
   // これにより hydrate-then-apply の時間差が消え、StrictMode double-invoke 耐性も向上する。
-  const [tweaks, dispatch] = useReducer(
-    tweaksReducer,
-    undefined,
-    () => normalizeTweaks(storage.get<unknown>(TWEAKS_STORAGE_KEY, TWEAK_DEFAULTS)),
+  const [tweaks, dispatch] = useReducer(tweaksReducer, undefined, () =>
+    normalizeTweaks(storage.get<unknown>(TWEAKS_STORAGE_KEY, TWEAK_DEFAULTS)),
   );
 
   // 永続化: tweaks 変化のたびに保存 (初回も TWEAK_DEFAULTS を上書き保存するが副作用はない)
