@@ -6,3 +6,6 @@ test-results
 mock
 pnpm-lock.yaml
 package-lock.json
+# Aphelion 配布物・生成物 (整形規則がプロジェクトと異なるため除外)
+.claude/
+docs/

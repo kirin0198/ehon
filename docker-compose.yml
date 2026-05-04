@@ -26,7 +26,7 @@ services:
     <<: *app-base
     command: npm run dev -- --host 0.0.0.0 --port 5173
     ports:
-      - "5173:5173"
+      - '5173:5173'
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
@@ -36,22 +36,22 @@ services:
   test:
     <<: *app-base
     command: npm test
-    profiles: ["test"]
+    profiles: ['test']
 
   typecheck:
     <<: *app-base
     command: npm run typecheck
-    profiles: ["test"]
+    profiles: ['test']
 
   lint:
     <<: *app-base
     command: npm run lint
-    profiles: ["test"]
+    profiles: ['test']
 
   build:
     <<: *app-base
     command: npm run build
-    profiles: ["test"]
+    profiles: ['test']
 
   # E2E は Playwright 公式イメージ (Chromium / WebKit 同梱) を利用。
   # dev サービスを起動し http://dev:5173 に対して実行する。
@@ -69,7 +69,7 @@ services:
         condition: service_started
     command: sh -c "npm ci && npx playwright test"
     init: true
-    profiles: ["test"]
+    profiles: ['test']
 
 volumes:
   app_node_modules:
