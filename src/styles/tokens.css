@@ -1,11 +1,18 @@
 /* デザイントークン (CSS Custom Properties)
  * モック (mock/styles/ehon.css) の :root 変数を踏襲。
- * フォント変数は src/stores/tweaks-context.tsx が動的に書き換える。
+ * 本番固定化 (2026-05-04 / ADR-008) により以下の値を固定宣言:
+ *   --font-body / --font-display: M PLUS Rounded 1c 固定
+ *   --terracotta: #E07856 固定
+ *   --font-size-body: 26px 固定 (モック 22px から拡大。3〜5 歳児向け)
+ * 将来カラースキーマを刷新する場合はこのファイルのみ編集すれば良い。
  */
 :root {
-  /* フォント (Tweaks で動的差し替え) */
-  --font-body: 'M PLUS Rounded 1c', 'BIZ UDPGothic', system-ui, sans-serif;
-  --font-display: 'Klee One', 'M PLUS Rounded 1c', sans-serif;
+  /* フォント (固定値。M PLUS Rounded 1c = やわらか丸ゴシック) */
+  --font-body: 'M PLUS Rounded 1c', system-ui, sans-serif;
+  --font-display: 'M PLUS Rounded 1c', system-ui, sans-serif;
+
+  /* 本文文字サイズ (固定値。Tweaks からの動的変更は廃止) */
+  --font-size-body: 26px;
 
   /* 紙・墨 */
   --paper: #fbf3e0;
@@ -13,7 +20,7 @@
   --ink: #3d2f1f;
   --ink-soft: #6b5742;
 
-  /* アクセント (Tweaks で動的差し替え) */
+  /* アクセント (固定値。テラコッタ #E07856) */
   --terracotta: #e07856;
   --terracotta-deep: #c24d2c;
 
