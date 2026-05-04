@@ -1,5 +1,6 @@
 // Tweaks の Context Provider と useTweaks フック。
-// 初回レンダー時に localStorage から復元済みの状態で起動し、変更時に永続化と CSS 変数同期を行う。
+// 本番固定化 (2026-05-04) により accent / font の CSS 変数同期 useEffect を削除。
+// 残る副作用は night クラス / no-ruby クラスの同期と localStorage 永続化の 3 本のみ。
 import {
   createContext,
   useCallback,
@@ -13,7 +14,6 @@ import type { Tweaks, TweakKey } from '../types/tweaks';
 import { TWEAK_DEFAULTS } from './tweaks-defaults';
 import { normalizeTweaks, tweaksReducer } from './tweaks-reducer';
 import * as storage from '../lib/safe-storage';
-import { FONT_PRESETS } from '../lib/font-presets';
 
 export const TWEAKS_STORAGE_KEY = 'eh.tweaks';
 
@@ -26,28 +26,16 @@ type TweaksContextValue = {
 const TweaksContext = createContext<TweaksContextValue | null>(null);
 
 export function TweaksProvider({ children }: { children: ReactNode }) {
-  // lazy initializer で初回レンダー時に既に localStorage 復元済みにする。
-  // これにより hydrate-then-apply の時間差が消え、StrictMode double-invoke 耐性も向上する。
+  // lazy initializer で初回レンダー時に localStorage 復元済みにする。
+  // StrictMode double-invoke 耐性と hydrate フラッシュ防止を兼ねる。
   const [tweaks, dispatch] = useReducer(tweaksReducer, undefined, () =>
     normalizeTweaks(storage.get<unknown>(TWEAKS_STORAGE_KEY, TWEAK_DEFAULTS)),
   );
 
-  // 永続化: tweaks 変化のたびに保存 (初回も TWEAK_DEFAULTS を上書き保存するが副作用はない)
+  // 永続化: tweaks 変化のたびに保存 (新スキーマ 4 キーのみ保存される)
   useEffect(() => {
     storage.set(TWEAKS_STORAGE_KEY, tweaks);
   }, [tweaks]);
-
-  // アクセント色の CSS 変数同期
-  useEffect(() => {
-    document.documentElement.style.setProperty('--terracotta', tweaks.accent);
-  }, [tweaks.accent]);
-
-  // フォントの CSS 変数同期
-  useEffect(() => {
-    const f = FONT_PRESETS[tweaks.font] ?? FONT_PRESETS.rounded;
-    document.documentElement.style.setProperty('--font-body', f.body);
-    document.documentElement.style.setProperty('--font-display', f.display);
-  }, [tweaks.font]);
 
   // 夜モード: ルートに .night クラスを付与
   useEffect(() => {

@@ -1,18 +1,11 @@
 import type { Tweaks } from '../types/tweaks';
 
-// Tweaks の既定値。モック (mock/app.jsx) の TWEAK_DEFAULTS を踏襲する。
-// localStorage に値が無い / 不正な場合のフォールバックに使われる。
+// Tweaks の既定値。
+// 本番固定化 (2026-05-04) により 4 フィールドに縮小。
+// fontSize / accent / font は tokens.css の CSS 変数として固定宣言。
 export const TWEAK_DEFAULTS: Tweaks = {
   shelfVariant: 'A',
   viewerVariant: 'A',
-  fontSize: 22,
   ruby: true,
   night: false,
-  accent: '#E07856', // --terracotta
-  font: 'rounded',
 };
-
-/** fontSize の許容範囲 / ステップ */
-export const FONT_SIZE_MIN = 16;
-export const FONT_SIZE_MAX = 36;
-export const FONT_SIZE_STEP = 2;
