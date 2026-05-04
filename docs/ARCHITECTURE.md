@@ -579,15 +579,17 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 
 #### vercel.json — SPA fallback rewrite の方針
 
-- 現行の SPA fallback rewrite パターン: `/((?!api/.*)*)` → `/index.html`
+- 現行の SPA fallback rewrite パターン: `/(.*)` → `/index.html`
 - Vercel は **filesystem-first** で URL を解決する (静的ファイル → headers → rewrites の順)
   - `dist/assets/*.js`, `dist/favicon.svg` 等のビルド成果物は rewrites より先に解決されるため、
     `source` 側でアセット拡張子を除外する必要はない
-- `/api/` は現在未使用だが、将来の BFF / LLM サーバルート (`/api/llm-generate` 等) と
-  SPA fallback が衝突しないよう先行除外する方針とする (project-rules.md "LLM 連携 (将来)" 参照)
+- `/api/` ルート追加時の方針: 本アプリは現状 API ルートを持たない。将来 BFF / LLM サーバルート
+  (`/api/llm-generate` 等) を追加する場合は、Vercel の Functions (`api/` ディレクトリ) として
+  実装すれば rewrites より優先されるため、SPA fallback と衝突しない
 - 注意: Vercel の `rewrites.source` は path-to-regexp DSL を使う。PCRE 式の
-  negative lookahead を複数組み合わせた旧パターン `/((?!.*\..*|api/.*)*)` は
-  path-to-regexp で正しく解釈されず、全パスにマッチしない不具合が生じていた (詳細は
+  negative lookahead を含むパターン (`/((?!api/).*)` や `/((?!.*\..*|api/.*).*)`) は
+  Vercel の path-to-regexp 実装で正しく解釈されず全パスにマッチしない不具合が確認されたため、
+  単純なキャプチャパターン `/(.*)` を採用する (詳細は
   `docs/design-notes/vercel-spa-rewrite-fix.md` を参照)
 
 > 関連: `docs/design-notes/vercel-spa-rewrite-fix.md`
