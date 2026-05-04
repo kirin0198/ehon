@@ -577,6 +577,21 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 | `index.html` | Vite エントリ HTML、`<title>えほんやさん</title>`、OGP メタタグ、フォント `<link>` | scaffolder |
 | `vercel.json` | SPA リライト | Operations Flow `infra-builder` |
 
+#### vercel.json — SPA fallback rewrite の方針
+
+- 現行の SPA fallback rewrite パターン: `/((?!api/.*)*)` → `/index.html`
+- Vercel は **filesystem-first** で URL を解決する (静的ファイル → headers → rewrites の順)
+  - `dist/assets/*.js`, `dist/favicon.svg` 等のビルド成果物は rewrites より先に解決されるため、
+    `source` 側でアセット拡張子を除外する必要はない
+- `/api/` は現在未使用だが、将来の BFF / LLM サーバルート (`/api/llm-generate` 等) と
+  SPA fallback が衝突しないよう先行除外する方針とする (project-rules.md "LLM 連携 (将来)" 参照)
+- 注意: Vercel の `rewrites.source` は path-to-regexp DSL を使う。PCRE 式の
+  negative lookahead を複数組み合わせた旧パターン `/((?!.*\..*|api/.*)*)` は
+  path-to-regexp で正しく解釈されず、全パスにマッチしない不具合が生じていた (詳細は
+  `docs/design-notes/vercel-spa-rewrite-fix.md` を参照)
+
+> 関連: `docs/design-notes/vercel-spa-rewrite-fix.md`
+
 ### tsconfig 主要設定
 
 ```jsonc
