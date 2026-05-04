@@ -1,5 +1,5 @@
 // Tweaks の Context Provider と useTweaks フック。
-// 初期マウント時に localStorage から復元し、変更時に永続化と CSS 変数同期を行う。
+// 初回レンダー時に localStorage から復元済みの状態で起動し、変更時に永続化と CSS 変数同期を行う。
 import {
   createContext,
   useCallback,
@@ -7,7 +7,6 @@ import {
   useEffect,
   useMemo,
   useReducer,
-  useRef,
   type ReactNode,
 } from 'react';
 import type { Tweaks, TweakKey } from '../types/tweaks';
@@ -27,19 +26,16 @@ type TweaksContextValue = {
 const TweaksContext = createContext<TweaksContextValue | null>(null);
 
 export function TweaksProvider({ children }: { children: ReactNode }) {
-  const [tweaks, dispatch] = useReducer(tweaksReducer, TWEAK_DEFAULTS);
-  const hydratedRef = useRef(false);
+  // lazy initializer で初回レンダー時に既に localStorage 復元済みにする。
+  // これにより hydrate-then-apply の時間差が消え、StrictMode double-invoke 耐性も向上する。
+  const [tweaks, dispatch] = useReducer(
+    tweaksReducer,
+    undefined,
+    () => normalizeTweaks(storage.get<unknown>(TWEAKS_STORAGE_KEY, TWEAK_DEFAULTS)),
+  );
 
-  // 初期マウント: localStorage から復元
+  // 永続化: tweaks 変化のたびに保存 (初回も TWEAK_DEFAULTS を上書き保存するが副作用はない)
   useEffect(() => {
-    const raw = storage.get<unknown>(TWEAKS_STORAGE_KEY, TWEAK_DEFAULTS);
-    dispatch({ type: 'hydrate', value: normalizeTweaks(raw) });
-    hydratedRef.current = true;
-  }, []);
-
-  // 永続化: hydrate 完了後の変更のみ書き込む (初回 default の上書きを避ける)
-  useEffect(() => {
-    if (!hydratedRef.current) return;
     storage.set(TWEAKS_STORAGE_KEY, tweaks);
   }, [tweaks]);
 

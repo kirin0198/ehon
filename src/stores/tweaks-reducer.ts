@@ -1,13 +1,13 @@
 // Tweaks の useReducer 本体。
-// `set` / `reset` / `hydrate` の 3 アクションのみを扱う薄い実装。
+// `set` / `reset` の 2 アクションを扱う薄い実装。
+// 初期値の復元は TweaksProvider の lazy initializer が担うため hydrate アクションは不要。
 import type { Tweaks, TweakKey } from '../types/tweaks';
 import { TWEAK_DEFAULTS, FONT_SIZE_MIN, FONT_SIZE_MAX } from './tweaks-defaults';
 import { FONT_PRESET_KEYS } from '../lib/font-presets';
 
 export type TweaksAction =
   | { type: 'set'; key: TweakKey; value: Tweaks[TweakKey] }
-  | { type: 'reset' }
-  | { type: 'hydrate'; value: Tweaks };
+  | { type: 'reset' };
 
 export function tweaksReducer(state: Tweaks, action: TweaksAction): Tweaks {
   switch (action.type) {
@@ -15,8 +15,6 @@ export function tweaksReducer(state: Tweaks, action: TweaksAction): Tweaks {
       return { ...state, [action.key]: action.value };
     case 'reset':
       return { ...TWEAK_DEFAULTS };
-    case 'hydrate':
-      return action.value;
     default:
       return state;
   }

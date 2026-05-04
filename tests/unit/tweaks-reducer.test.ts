@@ -17,11 +17,8 @@ describe('tweaksReducer', () => {
     expect(next).toEqual(TWEAK_DEFAULTS);
   });
 
-  it('TC-TR-003 hydrate で外部値を復元', () => {
-    const external = { ...TWEAK_DEFAULTS, accent: '#000000', fontSize: 20 };
-    const next = tweaksReducer(TWEAK_DEFAULTS, { type: 'hydrate', value: external });
-    expect(next).toEqual(external);
-  });
+  // TC-TR-003: hydrate アクションは lazy initializer 化により廃止。TweaksProvider の
+  // lazy initializer テストは tweaks-context.test.tsx の TC-TC-002 で継続カバーする。
 });
 
 describe('normalizeTweaks', () => {
