@@ -73,10 +73,11 @@ export function ViewerB(props: Props) {
             />
           </div>
           {isCover ? (
-            <CoverPage story={story} onStart={() => go(1)} ruby={ruby} overlay />
+            <CoverPage story={story} onStart={() => go(1)} overlay />
           ) : (
+            // <ruby>/<rt> を常に DOM に保持し、CSS の .no-ruby rt { display:none } で表示制御 (SPEC R-005)
             <div className="book-b-text-card" style={{ fontSize }}>
-              {ruby ? <RubyText text={page!.ruby} /> : page!.text}
+              <RubyText text={page!.ruby} />
             </div>
           )}
         </div>

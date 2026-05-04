@@ -79,11 +79,12 @@ export function ViewerA(props: Props) {
           </div>
           <div className="book-a-page right">
             {isCover ? (
-              <CoverPage story={story} onStart={() => go(1)} ruby={ruby} />
+              <CoverPage story={story} onStart={() => go(1)} />
             ) : (
               <>
+                {/* <ruby>/<rt> を常に DOM に保持し、CSS の .no-ruby rt { display:none } で表示制御 (SPEC R-005) */}
                 <div className="book-a-text" style={{ fontSize }}>
-                  {ruby ? <RubyText text={page!.ruby} /> : page!.text}
+                  <RubyText text={page!.ruby} />
                 </div>
                 <div className="book-a-pageno">
                   {pageIndex} / {story.pages.length}

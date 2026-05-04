@@ -1,21 +1,21 @@
 // 表紙ページ (両ビュアー共通): 物語タイトル + 「よみはじめる」CTA
+// <ruby>/<rt> は常に DOM に保持し、CSS の .no-ruby rt { display:none } で表示制御 (SPEC R-005)
 import type { Story } from '../../types/story';
 import { RubyText } from '../common/RubyText';
 
 type Props = {
   story: Story;
   onStart: () => void;
-  ruby: boolean;
   /** ViewerB でカバー画像が背景になっているか (true なら半透明オーバーレイ) */
   overlay?: boolean;
 };
 
-export function CoverPage({ story, onStart, ruby, overlay = false }: Props) {
+export function CoverPage({ story, onStart, overlay = false }: Props) {
   if (overlay) {
     return (
       <div className="book-cover-overlay">
         <div className="book-cover-title">
-          {ruby ? <RubyText text={story.titleRuby} /> : story.title}
+          <RubyText text={story.titleRuby} />
         </div>
         <div className="book-cover-author">{story.author}</div>
         <button
@@ -41,7 +41,7 @@ export function CoverPage({ story, onStart, ruby, overlay = false }: Props) {
           marginBottom: 16,
         }}
       >
-        {ruby ? <RubyText text={story.titleRuby} /> : story.title}
+        <RubyText text={story.titleRuby} />
       </div>
       <div
         style={{
