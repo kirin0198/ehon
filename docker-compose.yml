@@ -56,7 +56,7 @@ services:
   # E2E は Playwright 公式イメージ (Chromium / WebKit 同梱) を利用。
   # dev サービスを起動し http://dev:5173 に対して実行する。
   e2e:
-    image: mcr.microsoft.com/playwright:v1.44.0-jammy
+    image: mcr.microsoft.com/playwright:v1.59.1-jammy
     working_dir: /app
     volumes:
       - .:/app
