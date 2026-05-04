@@ -5,6 +5,7 @@
 > Source: DISCOVERY_RESULT.md (2026-05-04), INTERVIEW_RESULT.md (2026-05-04), SCOPE_PLAN.md (2026-05-04), project-rules.md (2026-05-04)
 > Update history:
 >   - 2026-05-04: Initial draft (spec-designer / Delivery Flow Light プラン)
+>   - 2026-05-04: Tweaks 機能の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントを固定化、UC-010/012/013 削除、Tweaks 型を 4 フィールドに縮小)
 
 ## 0. サービス名（正式決定）
 
@@ -115,11 +116,11 @@
 | UC-007 | ビュアーを閉じて本棚に戻る（Esc / 戻るボタン） | P-1 / P-2 | Must |
 | UC-008 | ビュアーレイアウトを切り替える（ViewerA ⇔ ViewerB） | P-2 | Must |
 | UC-009 | ふりがなを ON/OFF する | P-2 | Must |
-| UC-010 | 文字サイズを調整する | P-2 | Must |
+| UC-010 | (削除: 文字サイズは 26px に固定 / 2026-05-04) | — | — |
 | UC-011 | 夜モードを ON/OFF する | P-2 | Must |
-| UC-012 | フォントプリセットを切り替える | P-2 | Should |
-| UC-013 | アクセント色を切り替える | P-2 | Should |
-| UC-014 | Tweaks パネルで設定を一括操作する | P-2 | Should |
+| UC-012 | (削除: フォントは「やわらか丸ゴシック」固定 / 2026-05-04) | — | — |
+| UC-013 | (削除: アクセント色はテラコッタ固定 / 2026-05-04) | — | — |
+| UC-014 | Tweaks パネルで本棚 / ビュアー / ふりがな / 夜モードの 4 項目を一括操作する | P-2 | Must |
 | UC-015 | 設定を再訪時に復元する（localStorage） | P-1 / P-2 | Must |
 | UC-016 | レスポンシブ環境で快適に閲覧する | 全 | Must |
 | UC-017 | キーボードのみで全操作を完結する | P-2（a11y） | Must |
@@ -216,12 +217,14 @@
   - スクリーンリーダー（VoiceOver / NVDA）はルビ ON 時に「漢字 → 読み」の順で読み上げる
   - 切替が即座に画面に反映される
 
-### UC-010: 文字サイズ調整
-- **概要**: 本文文字サイズを 16〜36px / 2px ステップで調整
-- **正常フロー**: ビュアーツールバーの ± ボタン / Tweaks パネルのスライダー
-- **受入基準**:
-  - 範囲外への変更は無効化
-  - 値は localStorage に永続化
+### UC-010: (削除 / 2026-05-04)
+
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> 文字サイズは本番運用時に **26px の固定値** とする。Tweaks パネルのスライダー
+> および ViewerBar の ± ボタン / 数値表示は UI から削除する。
+>
+> 経緯と方針は `docs/design-notes/tweaks-simplification.md` を参照。
 
 ### UC-011: 夜モード ON/OFF
 - **概要**: 寝る前読み聞かせ用の暗色テーマ切替
@@ -231,31 +234,48 @@
   - 主要組み合わせのコントラスト比 4.5:1 以上（visual 検証で R-001 を解消）
   - 切替は即座に全画面へ波及
 
-### UC-012: フォントプリセット切替（Should）
-- **概要**: 6 種（rounded / udp / klee / pop / maru / mincho）から選択
-- **受入基準**:
-  - 切替時に `--font-body` / `--font-display` CSS 変数を更新
-  - Google Fonts 取得失敗時は `system-ui, sans-serif` にフォールバック（IR-003）
-  - `font-display: swap` でレイアウトずれを最小化
+### UC-012: (削除 / 2026-05-04)
 
-### UC-013: アクセント色切替（Should）
-- **概要**: 4 色程度のアクセント色から選択
-- **受入基準**:
-  - 切替時に `--terracotta`（または相当 CSS 変数）を更新
-  - 候補数・色値の正式確定は ux-designer / visual-designer
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> フォントは本番運用時に **「やわらか丸ゴシック」 (`rounded` プリセット =
+> M PLUS Rounded 1c) の固定値** とする。Tweaks パネルのフォント選択 UI と
+> 関連プリセット定義 (`src/lib/font-presets.ts`) は削除する。CSS 変数
+> `--font-body` / `--font-display` は `tokens.css` で固定値として宣言する。
 
-### UC-014: Tweaks パネル一括操作（Should）
-- **概要**: 全 Tweaks を 1 つのパネルから操作
+### UC-013: (削除 / 2026-05-04)
+
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> アクセント色は本番運用時に **テラコッタ `#E07856`** に固定する。
+> Tweaks パネルのアクセント色選択 UI と `src/lib/accent-presets.ts` は削除する。
+> 全体カラースキーマの将来変更は `tokens.css` の `--terracotta` 定義変更で対応する。
+
+### UC-014: Tweaks パネル一括操作（Must）
+
+> Updated: 2026-05-04 (Should → Must。操作対象を 4 項目に縮小)
+
+- **概要**: Tweaks パネルから本棚 / ビュアー / ふりがな / 夜モードの 4 項目を一括操作する
 - **受入基準**:
-  - Tweaks パネルから FR-008 〜 FR-013 がすべて操作可能
-  - パネルは画面右下のフローティングで、開閉可能
+  - Tweaks パネルから以下の 4 項目が操作可能:
+    - 本棚バリアント (UC-002)
+    - ビュアーバリアント (UC-008)
+    - ふりがな ON/OFF (UC-009)
+    - 夜モード ON/OFF (UC-011)
+  - パネルは画面右下のフローティングで、開閉可能 (× ボタン / Esc キー / 外側クリック)
+  - パネルは「レイアウト」「よみやすさ」の 2 セクションに整理される
   - **モックの `tweaks-panel.jsx` ホスト連携プロトコル（`__edit_mode_*` postMessage）は本実装で再利用しない**
 
 ### UC-015: 設定の永続化（localStorage）
+
+> Updated: 2026-05-04 (永続化対象を 4 項目に縮小)
+
 - **概要**: Tweaks 設定を再訪時に復元
 - **受入基準**:
   - キー: `eh.tweaks`（モック踏襲）
-  - 永続化対象: `shelfVariant` / `viewerVariant` / `fontSize` / `ruby` / `night` / `accent` / `font`
+  - 永続化対象: `shelfVariant` / `viewerVariant` / `ruby` / `night`
+  - 旧スキーマの余分なキー (`fontSize` / `accent` / `font`) が localStorage に残っていても
+    `normalizeTweaks` の whitelist 方式で無視される。次回保存時に新スキーマで上書きされ自然消滅する
   - localStorage 利用不可環境では in-memory フォールバック（IR-002, R-003）
 
 ### UC-016: レスポンシブ
@@ -375,15 +395,27 @@
 
 ### Tweaks 型（概念）
 
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> 本番運用ではユーザー操作可能な項目を 4 つに絞る。文字サイズ・アクセント色・
+> フォントは固定値とし `tokens.css` の CSS 変数として宣言する。
+> 詳細は `docs/design-notes/tweaks-simplification.md` を参照。
+
 | Field | Type | 既定値 | 説明 |
 |-------|------|--------|------|
 | `shelfVariant` | "A" \| "B" | "A" | 本棚バリアント |
 | `viewerVariant` | "A" \| "B" | "A" | ビュアーバリアント |
-| `fontSize` | number (16〜36, step 2) | 22 | 本文文字サイズ |
 | `ruby` | boolean | true | ふりがな ON/OFF |
 | `night` | boolean | false | 夜モード |
-| `accent` | string (CSS color) | "#E07856" | アクセント色 |
-| `font` | string (preset key) | "rounded" | フォントプリセット |
+
+### 固定値 (UI 操作不可、本番運用)
+
+| 項目 | 値 | 反映先 |
+|------|---|-------|
+| 本文文字サイズ | 26px | `--font-size-body` (新規 CSS 変数 / `tokens.css`) |
+| アクセント色 | `#E07856` (テラコッタ) | `--terracotta` (`tokens.css`) |
+| フォント (body) | `'M PLUS Rounded 1c', 'BIZ UDPGothic', system-ui, sans-serif` | `--font-body` (`tokens.css`) |
+| フォント (display) | `'Klee One', 'M PLUS Rounded 1c', sans-serif` | `--font-display` (`tokens.css`) |
 
 ### Relationships
 
@@ -456,7 +488,7 @@
 
 | # | 項目 | 仮定 | 解決担当 |
 |---|------|------|----------|
-| TBD-001 | アクセント色の UI 露出色数と色値 | モック CSS 変数群から 4 色を `ux-designer` / `visual-designer` で選定 | ux-designer |
+| TBD-001 | (Resolved 2026-05-04) アクセント色は本番で `#E07856` (テラコッタ) に固定。UI 露出は廃止 (UC-013 削除) | — | analyst |
 | TBD-002 | 夜モード `--mustard` のコントラスト 4.5:1 達成可否 | 未達なら夜パレット専用置換色を導入 | ux-designer (lightweight visual default) |
 | TBD-003 | URL クエリでのバリアント切替（FR-020 / UC-019）の MVP 取込 | 実装コスト小であれば取込、大きければ Could のまま | architect |
 | TBD-004 | 再話文の権利表記（フッター文言） | 仮: 「原作: パブリックドメイン / 再話・コード: © 2026 えほんやさん（MIT）」 | spec-designer 仮確定 → doc-writer |
@@ -468,13 +500,15 @@
 ## 11. 受入条件サマリー（Phase 末で再確認）
 
 - [ ] 本棚 → 物語選択 → 表紙 → 全ページ閲覧 → 戻る が E2E で 100% 通過する
-- [ ] 全 Must 機能（FR-001〜010, FR-014〜015, FR-019, FR-021）が動作する
+- [ ] 全 Must 機能（FR-001〜009, FR-011, FR-014〜015, FR-019, FR-021）が動作する
 - [ ] 画像不在でもアプリが破綻せずフォールバックで読み続けられる
 - [ ] localStorage 不在環境でもエラーで停止しない
 - [ ] キーボードのみで本棚 → ビュアー → ページ送り → 戻るが完了する
 - [ ] Lighthouse Accessibility ≥ 95
 - [ ] バンドル初回 JS ≤ 200KB gzipped
 - [ ] 主要組み合わせのコントラスト比 4.5:1 以上（夜モード含む）
+- [ ] (2026-05-04 追加) Tweaks パネルが「レイアウト」「よみやすさ」の 2 セクション・4 操作のみ提供する
+- [ ] (2026-05-04 追加) 本文文字サイズが 26px で固定表示される
 
 ---
 

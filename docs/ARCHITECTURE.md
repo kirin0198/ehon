@@ -1,12 +1,14 @@
 # Architecture Design: えほんやさん（Ehon）
 
-> Source: SPEC.md (2026-05-04)
-> Source: UI_SPEC.md (2026-05-04)
+> Source: SPEC.md (2026-05-04 / Tweaks 縮小版)
+> Source: UI_SPEC.md (2026-05-04 / Tweaks 縮小版)
 > Source: DISCOVERY_RESULT.md (2026-05-04) / project-rules.md (2026-05-04)
+> Source: docs/design-notes/tweaks-simplification.md (2026-05-04)
 > Created: 2026-05-04
 > Last updated: 2026-05-04
 > Update history:
 >   - 2026-05-04: Initial draft (architect / Delivery Flow Light プラン)
+>   - 2026-05-04: Tweaks 機能の本番固定化 (architect / Tweaks 型を 4 フィールドに縮小、CSS 変数同期 useEffect を 2 本削減、ADR-008 追記、実装順序を Phase A〜E に再構成)
 
 ## 1. アーキテクチャ概要
 
@@ -40,7 +42,7 @@ flowchart TB
   - 本棚 / ビュアー切替は `tweaks.shelfVariant` / `tweaks.viewerVariant` を見て分岐レンダ
   - キーボード・ページ送り等の振舞いは Custom Hook (`useViewerNav` 等) に切り出し
 - **Feature-based + Layer-based ハイブリッドのディレクトリ構成**（後述 §2）
-- **トークン駆動スタイル**: CSS Custom Properties (`--paper`, `--ink` 等) を `:root` に集約
+- **トークン駆動スタイル**: CSS Custom Properties (`--paper`, `--ink`, `--terracotta` 等) を `:root` に集約。ランタイム書換は廃止し、固定値を `tokens.css` に直書きする方針へ移行（ADR-008）
 
 ### Tech Stack（確定版）
 
@@ -79,7 +81,7 @@ flowchart TB
 
 > **追加候補は最小化**:
 > - i18n / Routing / 状態管理ライブラリは導入しない (MVP 不要)
-> - フォントは Google Fonts URL 直参照（`<link>`）。`@fontsource/*` は採用検討するも、CDN キャッシュ効率を優先し見送り
+> - フォントは Google Fonts URL 直参照（`<link>`）。本番固定化に伴い M PLUS Rounded 1c のみを残し、その他のフォント `<link>` は `index.html` から除去する（ADR-008）
 > - Markdown / 画像処理ライブラリは MVP 不要
 
 ## 2. ディレクトリ構造
@@ -112,18 +114,15 @@ ehon/
 │   │   ├── viewers/
 │   │   │   ├── ViewerA.tsx            # 見開き
 │   │   │   ├── ViewerB.tsx            # 全画面背景
-│   │   │   ├── ViewerBar.tsx          # 上部ツールバー
+│   │   │   ├── ViewerBar.tsx          # 上部ツールバー（± ボタン削除済）
 │   │   │   ├── CoverPage.tsx          # 表紙ページ（共通）
 │   │   │   └── PageNumber.tsx
 │   │   ├── tweaks/
 │   │   │   ├── TweaksLauncher.tsx     # 右下 ⚙ ボタン
-│   │   │   ├── TweaksPanel.tsx        # パネル本体
+│   │   │   ├── TweaksPanel.tsx        # パネル本体（2 セクション・4 操作）
 │   │   │   ├── TweakSection.tsx
 │   │   │   ├── TweakRadio.tsx
-│   │   │   ├── TweakToggle.tsx
-│   │   │   ├── TweakSlider.tsx
-│   │   │   ├── TweakColor.tsx
-│   │   │   └── TweakSelect.tsx
+│   │   │   └── TweakToggle.tsx
 │   │   ├── common/
 │   │   │   ├── EhButton.tsx
 │   │   │   ├── EmptyState.tsx
@@ -138,24 +137,22 @@ ehon/
 │   ├── lib/
 │   │   ├── ruby-parser.ts             # 漢字{かんじ} → <ruby>
 │   │   ├── ruby-parser.types.ts
-│   │   ├── font-presets.ts            # FONT_PRESETS 定数
-│   │   ├── accent-presets.ts          # アクセント色プリセット
 │   │   ├── illustration-path.ts       # storyId/scene → /illustrations/...
 │   │   └── safe-storage.ts            # localStorage の try/catch ラッパ
 │   ├── stores/
-│   │   ├── tweaks-context.tsx         # Context + Provider
+│   │   ├── tweaks-context.tsx         # Context + Provider（CSS 変数同期は night/ruby のみ）
 │   │   ├── tweaks-reducer.ts          # useReducer 本体
-│   │   └── tweaks-defaults.ts         # TWEAK_DEFAULTS
+│   │   └── tweaks-defaults.ts         # TWEAK_DEFAULTS（4 フィールド）
 │   ├── data/
 │   │   └── stories.ts                 # 6 作品の物語データ + 型
 │   ├── styles/
-│   │   ├── tokens.css                 # CSS 変数（モック由来）
+│   │   ├── tokens.css                 # CSS 変数（モック由来 + 固定値の直書き）
 │   │   ├── global.css                 # html/body リセット + ruby
 │   │   ├── ehon.css                   # モック CSS 移植（components 横断）
 │   │   └── reduced-motion.css         # prefers-reduced-motion
 │   └── types/
 │       ├── story.ts                   # Story / Page 型
-│       └── tweaks.ts                  # Tweaks / TweakKey 型
+│       └── tweaks.ts                  # Tweaks / TweakKey 型（4 フィールド）
 ├── tests/
 │   ├── unit/
 │   │   ├── ruby-parser.test.ts
@@ -172,7 +169,7 @@ ehon/
 │       ├── home.spec.ts               # 本棚 → ビュアー → 戻る
 │       ├── viewer-keyboard.spec.ts    # キーボード完結
 │       ├── ruby-toggle.spec.ts        # ふりがな切替
-│       ├── persistence.spec.ts        # localStorage 永続化
+│       ├── persistence.spec.ts        # localStorage 永続化（4 キー対象）
 │       ├── responsive-ipad.spec.ts    # iPad プロファイル
 │       └── image-fallback.spec.ts     # 画像不在シナリオ
 ├── docs/                              # Aphelion 成果物（既存）
@@ -185,7 +182,7 @@ ehon/
 │   ├── styles/
 │   └── README.md
 ├── .claude/
-├── index.html                         # Vite エントリ
+├── index.html                         # Vite エントリ。フォント <link> は M PLUS Rounded 1c のみ
 ├── vite.config.ts
 ├── tsconfig.json
 ├── tsconfig.node.json                 # vite.config.ts 用
@@ -205,6 +202,8 @@ ehon/
 ```
 
 > **`mock/` の扱い**: scaffolder 段階で既存モック (`Ehon.html`, `app.jsx`, `tweaks-panel.jsx`, `components/`, `data/`, `styles/`) を `mock/` に移動。`tsconfig.json` の `exclude` と Vite `optimizeDeps` で本番ビルドから除外する（R-009）。削除はしない（IR-005 / project-rules）。
+>
+> **本番固定化に伴う削除ファイル**: `src/components/tweaks/TweakColor.tsx` / `TweakSelect.tsx` / `TweakSlider.tsx` / `src/lib/accent-presets.ts` / `src/lib/font-presets.ts` の 5 ファイルは削除（ADR-008 / Phase C）。
 
 ## 3. モジュール設計
 
@@ -220,10 +219,12 @@ ehon/
 - **公開インターフェース**:
   - Hook: `useTweaks(): { tweaks: Tweaks; setTweak: <K extends TweakKey>(k: K, v: Tweaks[K]) => void; reset: () => void }`
   - Provider: `<TweaksProvider>{children}</TweaksProvider>`
-- **副作用**:
-  - `useEffect`: `tweaks.accent` 更新時に `document.documentElement.style.setProperty('--terracotta', accent)`
-  - `useEffect`: `tweaks.font` 更新時に `--font-body` / `--font-display` を更新
-  - `useEffect`: 永続化キー `eh.tweaks` で `safe-storage.set` 呼出
+- **副作用（2 本のみ。本番固定化により `accent` / `font` 同期は廃止）**:
+  - `useEffect`: `tweaks.night` 更新時に `document.documentElement.classList.toggle('night', night)` を反映
+  - `useEffect`: `tweaks.ruby` 更新時に `document.documentElement.classList.toggle('no-ruby', !ruby)` を反映
+  - `useEffect`: 永続化キー `eh.tweaks` で `safe-storage.set` を呼出（書込専用 effect）
+
+> 注: アクセントカラー (`--terracotta`) と本文/見出しフォント (`--font-body` / `--font-display`) は `tokens.css` の `:root` で固定値を宣言する。Provider からのランタイム書換は行わない（ADR-008）。
 
 ### `ruby-parser` (src/lib/ruby-parser.ts)
 - **責務**: `桃太郎{ももたろう}` 形式を `<ruby><rb>桃太郎</rb><rt>ももたろう</rt></ruby>` に変換
@@ -305,21 +306,29 @@ ehon/
 ### `ViewerA` / `ViewerB` (src/components/viewers/*.tsx)
 - **責務**: ビュアーレイアウト 2 バリアント。`useViewerNav` で状態管理
 - **依存**: `useViewerNav`, `RubyText`, `IllustWithFallback`, `ViewerBar`, `CoverPage`
-- **Props**:
+- **Props**（本番固定化により `fontSize` / `setFontSize` は削除済み）:
   ```ts
   type ViewerProps = {
     story: Story;
     onClose: () => void;
-    settings: { ruby: boolean; fontSize: number; night: boolean };
+    settings: { ruby: boolean; night: boolean };
     setSetting: <K extends keyof Tweaks>(k: K, v: Tweaks[K]) => void;
     variant: 'A' | 'B';
     setVariant: (v: 'A' | 'B') => void;
   };
   ```
+- 本文サイズは `tokens.css` の `--font-size-body: 26px` を CSS で参照（props 経由しない）
+
+### `ViewerBar` (src/components/viewers/ViewerBar.tsx)
+- **責務**: ビュアー上部のツールバー。ふりがな / 夜モード / バリアント切替 / 閉じる ボタンを提供
+- **本番固定化に伴う削除**: 「あ-」「あ+」ボタンと現在値表示（fontSize 操作）を撤去
+- **Props**: `ruby`, `night`, `variant`, `onToggleRuby`, `onToggleNight`, `onSwitchVariant`, `onClose`
 
 ### `TweaksPanel` (src/components/tweaks/TweaksPanel.tsx)
-- **責務**: 設定パネルのコンテナ。子要素 `<TweakSection>` に分配
-- **依存**: `useTweaks`, 各 `Tweak*` コンポーネント
+- **責務**: 設定パネルのコンテナ。子要素 `<TweakSection>` に分配。本番固定化により 2 セクション・4 操作のみ
+  - 「レイアウト」セクション: 本棚バリアント (A/B), ビュアーバリアント (A/B)
+  - 「よみやすさ」セクション: ふりがな ON/OFF, 夜モード ON/OFF
+- **依存**: `useTweaks`, `TweakRadio`, `TweakToggle`（`TweakColor` / `TweakSelect` / `TweakSlider` は削除）
 - **Props**: `open: boolean`, `onClose: () => void`
 
 ### `ErrorBoundary` (src/components/common/ErrorBoundary.tsx)
@@ -356,33 +365,45 @@ export type Page = {
 
 `src/data/stories.ts` は `export const STORIES: readonly Story[] = [...]` で 6 作品をエクスポート。
 
-### `Tweaks` 型 (src/types/tweaks.ts)
+### `Tweaks` 型 (src/types/tweaks.ts) — 本番固定化版（4 フィールド）
 
 ```ts
 export type Tweaks = {
   shelfVariant: 'A' | 'B';
   viewerVariant: 'A' | 'B';
-  fontSize: number;           // 16 〜 36 step 2
   ruby: boolean;
   night: boolean;
-  accent: string;             // CSS color (4 候補から選択)
-  font: FontPreset;
 };
-
-export type FontPreset = 'rounded' | 'udp' | 'klee' | 'pop' | 'maru' | 'mincho';
 
 export type TweakKey = keyof Tweaks;
 
 export const TWEAK_DEFAULTS: Tweaks = {
   shelfVariant: 'A',
   viewerVariant: 'A',
-  fontSize: 22,
   ruby: true,
   night: false,
-  accent: '#E07856',  // --terracotta
-  font: 'rounded',
 };
 ```
+
+> 既定値表（4 行）:
+>
+> | Key | 既定値 | 操作 UI |
+> |-----|--------|---------|
+> | `shelfVariant` | `'A'` (立てかけ書架) | TweaksPanel / ShelfSwitcher |
+> | `viewerVariant` | `'A'` (見開き) | TweaksPanel / ViewerBar |
+> | `ruby` | `true` | TweaksPanel / ViewerBar |
+> | `night` | `false` | TweaksPanel / ViewerBar |
+
+#### 固定値（CSS 変数として `tokens.css` に直書き）
+
+ランタイム可変ではなく、`src/styles/tokens.css` の `:root` で固定宣言する。将来カラースキーマ刷新時は `tokens.css` 1 ファイルの編集のみで対応する（ADR-008）。
+
+| CSS 変数 | 固定値 | 用途 |
+|----------|--------|------|
+| `--terracotta` | `#E07856` | アクセントカラー（旧 `tweaks.accent`） |
+| `--font-body` | `'M PLUS Rounded 1c', system-ui, sans-serif` | 本文フォント（旧 `tweaks.font` の rounded プリセット） |
+| `--font-display` | `'M PLUS Rounded 1c', system-ui, sans-serif` | 見出しフォント |
+| `--font-size-body` | `26px` | 本文文字サイズ（旧 `tweaks.fontSize`、モック既定 22px から拡大） |
 
 ### Reducer の Action
 
@@ -397,7 +418,7 @@ type Action =
 
 - キー: `eh.tweaks`（モック踏襲）
 - 値: `Tweaks` の JSON 文字列。スキーマ不一致なら `TWEAK_DEFAULTS` にフォールバック
-- 復元時バリデーション: 各キーの型が想定と一致するか個別に確認、不正値は default を採用（前方互換のためフィールド追加に強い）
+- 復元時バリデーション: `normalizeTweaks` が whitelist 方式で 4 キーのみを取り出す。古いブラウザに残存している `fontSize` / `accent` / `font` キーは黙殺され、次回保存時に自然消滅する（追加マイグレーション不要）
 
 ### Indexes / Relations
 
@@ -414,9 +435,9 @@ type Action =
 ```mermaid
 flowchart LR
   A[App] -->|wraps| TP[TweaksProvider]
-  TP -->|context value| Tweaks[(tweaks state<br/>+ setTweak)]
+  TP -->|context value| Tweaks[(tweaks state<br/>4 keys)]
   TP -->|effect| LS[localStorage<br/>'eh.tweaks']
-  TP -->|effect| CSSVars[document.documentElement<br/>style --terracotta / --font-*]
+  TP -->|effect| HtmlClass[document.documentElement<br/>.night / .no-ruby class]
   Tweaks --> Shelf[ShelfA/ShelfB]
   Tweaks --> Viewer[ViewerA/ViewerB]
   Tweaks --> Panel[TweaksPanel]
@@ -424,11 +445,13 @@ flowchart LR
   App -->|local state| TweaksOpen[tweaksOpen: boolean]
 ```
 
+> 本番固定化に伴い、`document.documentElement.style.setProperty('--terracotta' / '--font-*')` のランタイム書換は廃止。アクセントカラーと本文/見出しフォントは `tokens.css` で固定（ADR-008）。
+
 ### 状態の所在
 
 | 状態 | 所在 | 永続化 |
 |------|------|--------|
-| `tweaks` (全 7 キー) | `TweaksProvider` (Context + Reducer) | localStorage `eh.tweaks` |
+| `tweaks` (4 キー: `shelfVariant` / `viewerVariant` / `ruby` / `night`) | `TweaksProvider` (Context + Reducer) | localStorage `eh.tweaks` |
 | `openId` (ビュアー対象 storyId) | `App` の useState | URL クエリ `?open={id}` で復元（Could / TBD-003） |
 | `tweaksOpen` (パネル開閉) | `App` の useState | しない（一時的 UI 状態） |
 | `selectedTags` | `App` の useState | しない（タグ絞込はセッション内のみ） |
@@ -438,9 +461,9 @@ flowchart LR
 
 ```
 1. mount: TweaksProvider が初期 state = TWEAK_DEFAULTS
-2. useEffect: safe-storage.get('eh.tweaks', TWEAK_DEFAULTS) → dispatch({type:'hydrate', value: ...})
+2. useEffect: safe-storage.get('eh.tweaks', TWEAK_DEFAULTS) → normalizeTweaks で whitelist 抽出 → dispatch({type:'hydrate', value: ...})
 3. 以降の変更: setTweak(key, value) → reducer 更新 → useEffect で safe-storage.set
-4. UI 副作用 (CSS 変数, .night クラス) は別の useEffect で同期
+4. UI 副作用 (.night / .no-ruby クラス) は別の useEffect で同期
 ```
 
 ハイドレーション時のフラッシュ対策:
@@ -495,63 +518,56 @@ flowchart LR
   1. `home.spec.ts`: 本棚 → 物語選択 → 表紙 →「よみはじめる」→ 全ページ閲覧 → 戻る
   2. `viewer-keyboard.spec.ts`: マウスを使わず本棚 → ビュアー → ←/→ → Esc が完了
   3. `ruby-toggle.spec.ts`: ふりがな切替で `<rt>` の可視性が変わる
-  4. `persistence.spec.ts`: Tweaks 変更 → リロード → 復元
+  4. `persistence.spec.ts`: Tweaks 4 キー変更 → リロード → 復元（fontSize シナリオは削除）
   5. `responsive-ipad.spec.ts`: iPad プロファイル（1024×768）でレイアウト崩れなし、`100dvh` 適用確認
   6. `image-fallback.spec.ts`: `public/illustrations/` 未配置 / 不正パス時にフォールバック表示
 
 ## 10. 実装順序 / 依存関係
 
+> 本番固定化（Tweaks Simplification）の実装は既存実装の刈り込みであり、Phase A〜E の小さなフェーズに再構成する。タスク粒度 5〜8 を想定。
+>
+> 関連: `docs/design-notes/tweaks-simplification.md`
+
 ```
-Implementation Phase 1: Foundation（基盤）
-  ├─ TASK-001: project init / scaffolder の生成物確認 (依存なし)
-  ├─ TASK-002: src/types/story.ts + src/types/tweaks.ts を定義 (TASK-001 後)
-  ├─ TASK-003: src/data/stories.ts に既存モック data/stories.js を TS 化して移植 (TASK-002 後)
-  ├─ TASK-004: src/styles/tokens.css + global.css + ehon.css を移植 (TASK-001 後 / 並行可)
-  └─ TASK-005: src/lib/ruby-parser.ts + safe-storage.ts + illustration-path.ts + font-presets.ts + accent-presets.ts を実装 (TASK-002 後)
+Phase A: 型・ストアの刈り込み
+  └─ TASK-A1: src/types/tweaks.ts から fontSize / accent / font を削除
+              + tweaks-defaults.ts の TWEAK_DEFAULTS 4 フィールド化
+              + tweaks-reducer.ts の normalizeTweaks 該当分岐削除
+              + tweaks-context.tsx から accent / font の useEffect を削除
+              (依存なし。型エラーが下流に伝播するので最初に実施)
 
-Implementation Phase 2: State Layer
-  ├─ TASK-006: src/stores/tweaks-defaults.ts + tweaks-reducer.ts (TASK-002, TASK-005 後)
-  └─ TASK-007: src/stores/tweaks-context.tsx と useTweaks フック (TASK-006 後)
+Phase B: UI の刈り込み
+  └─ TASK-B1: TweaksPanel.tsx から「色」「フォント」セクションを削除
+              + 「よみやすさ」セクションから文字サイズスライダー削除
+              (Phase A 後)
+  └─ TASK-B2: ViewerBar.tsx から ± ボタンと fontSize 数値表示を削除
+              + ViewerA / ViewerB / App.tsx の fontSize / setFontSize props を削除
+              (Phase A 後 / TASK-B1 と並行可)
 
-Implementation Phase 3: Common Components
-  ├─ TASK-008: src/components/common/RubyText.tsx (TASK-005 後)
-  ├─ TASK-009: src/components/common/IllustWithFallback.tsx (TASK-005 後)
-  ├─ TASK-010: src/components/common/EhButton.tsx + EmptyState.tsx + ErrorBoundary.tsx (TASK-001 後)
-  └─ TASK-011: src/components/layout/Header.tsx (TASK-001 後)
+Phase C: 不要モジュール削除 + tokens.css 固定値
+  └─ TASK-C1: TweakColor.tsx / TweakSelect.tsx / TweakSlider.tsx を git rm
+              + accent-presets.ts / font-presets.ts を git rm
+              + tokens.css に --terracotta / --font-body / --font-display /
+                --font-size-body=26px を直書き
+              + ehon.css の本文サイズ基準を 26px に調整
+              (Phase B 後)
 
-Implementation Phase 4: Shelf
-  ├─ TASK-012: TagFilter.tsx + ShelfSwitcher.tsx (TASK-007 後)
-  ├─ TASK-013: ShelfA.tsx (TASK-009, TASK-012 後)
-  └─ TASK-014: ShelfB.tsx (TASK-009, TASK-012 後)
+Phase D: テスト整理
+  └─ TASK-D1: tests/unit/tweaks-reducer.test.ts から削除キー関連アサーション除去
+              + tests/unit/TweaksPanel.test.tsx を 2 セクション構成に修正
+              + tests/e2e/persistence.spec.ts から fontSize 永続化シナリオ削除
+              + ViewerBar 関連テストから ± ボタン操作の検証を削除
+              + 古い localStorage キー残存ケースの E2E 確認を追加
+              (Phase C 後)
 
-Implementation Phase 5: Viewer
-  ├─ TASK-015: src/hooks/useViewerNav.ts (TASK-001 後)
-  ├─ TASK-016: ViewerBar.tsx (TASK-007 後)
-  ├─ TASK-017: CoverPage.tsx (TASK-008, TASK-009 後)
-  ├─ TASK-018: ViewerA.tsx (TASK-008, TASK-009, TASK-015, TASK-016, TASK-017 後)
-  └─ TASK-019: ViewerB.tsx (TASK-008, TASK-009, TASK-015, TASK-016, TASK-017 後)
-
-Implementation Phase 6: Tweaks Panel
-  ├─ TASK-020: TweakSection / TweakRadio / TweakToggle / TweakSlider / TweakColor / TweakSelect (TASK-007 後)
-  ├─ TASK-021: TweaksLauncher.tsx (TASK-001 後)
-  └─ TASK-022: TweaksPanel.tsx (TASK-020, TASK-021 後)
-
-Implementation Phase 7: App Composition
-  ├─ TASK-023: App.tsx で全体結合 (Phase 4-6 後)
-  ├─ TASK-024: main.tsx エントリ (TASK-023 後)
-  └─ TASK-025: index.html / public 配下 (TASK-024 後)
-
-Implementation Phase 8: Polish & a11y
-  ├─ TASK-026: prefers-reduced-motion 対応 CSS (TASK-004, TASK-018, TASK-019 後)
-  ├─ TASK-027: フォーカス管理（useFocusTrap）と aria 属性追加 (TASK-018, TASK-019, TASK-022 後)
-  └─ TASK-028: 100dvh 採用と iPad Safari 対策 (TASK-018, TASK-019 後)
-
-Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
-  └─ TASK-029: URL クエリ ?shelf=A|B&viewer=A|B&open={id} の同期 (TASK-023 後 / 任意)
+Phase E: index.html フォント整理
+  └─ TASK-E1: index.html の <link rel="stylesheet" href="...fonts.googleapis.com..."> から
+              不要フォント (Klee One / Hachi Maru Pop / Zen Maru Gothic / Shippori Mincho /
+              Kosugi Maru / BIZ UDPGothic) の URL を削除し、M PLUS Rounded 1c のみ残す
+              (Phase D 後 / 任意で並行可)
 ```
 
-> 各 TASK には対応する unit test を test-designer フェーズで合わせて設計。
-> ARCHITECT_BRIEF: 約 28 タスク、Light プラン推定 20h（SCOPE_PLAN.md より）。
+> ARCHITECT_BRIEF（developer 向け）の詳細（ブランチ名 `feat/tweaks-simplification`、削除対象ファイル一覧、テスト変更内容、完了判定）は `docs/design-notes/tweaks-simplification.md` §3 / §6 / §8 を参照。
 
 ## 11. 環境 / 設定
 
@@ -574,7 +590,7 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 | `.eslintrc.cjs` | ESLint (`@typescript-eslint`, `react-hooks`, `jsx-a11y`) | scaffolder |
 | `.prettierrc` | Prettier | scaffolder |
 | `.gitignore` | git 除外 (`node_modules`, `dist`, `coverage`, `.env*`, `playwright-report/`, `test-results/`) | scaffolder |
-| `index.html` | Vite エントリ HTML、`<title>えほんやさん</title>`、OGP メタタグ、フォント `<link>` | scaffolder |
+| `index.html` | Vite エントリ HTML、`<title>えほんやさん</title>`、OGP メタタグ、フォント `<link>` (M PLUS Rounded 1c のみ) | scaffolder |
 | `vercel.json` | SPA リライト | Operations Flow `infra-builder` |
 
 #### vercel.json — SPA fallback rewrite の方針
@@ -641,6 +657,8 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 | R-011: 挿絵未配置で見栄え悪化 | medium | `IllustWithFallback` で `placeholderEmoji + bg` フォールバック。Delivery 中に順次配置可 |
 | R-012: 挿絵画像のサイズ過大で LCP 未達 | medium | 表紙のみ `loading="eager"`、シーンは `lazy`、推奨スペック README 記載 |
 | R-013: 著作権上問題のある画像混入 | high | doc-writer が README に明記、Operations Flow で `LICENSE-illustrations.md` 雛形整備 |
+| R-014: 26px 固定で iPhone 小型機の 1 行幅が短くなり改行頻度が上昇 | low-medium | developer 段階で実機 / Playwright iPad / iPhone プロファイル確認、必要時は CSS で `clamp()` を検討（ADR-008） |
+| R-015: 古い localStorage キー (fontSize / accent / font) 残存 | low | `normalizeTweaks` の whitelist 方式で黙殺。次回保存時に自然消滅。E2E (`persistence.spec.ts`) で確認 |
 
 ## 13. Architecture Decision Records (ADR)
 
@@ -654,7 +672,7 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 - **Rejected Alternatives**:
   - Zustand: 便利だが Tweaks 単一なら過剰
   - Redux Toolkit: ボイラープレートが過大
-  - useState の prop drilling: 7 キーを多階層に渡すのが煩雑
+  - useState の prop drilling: 多階層に渡すのが煩雑
 
 ### ADR-002: ルーティングライブラリを採用しない
 - **Context**: 物理スクリーンが本棚 + ビュアーオーバーレイのみで URL は 1 つ
@@ -706,6 +724,27 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 - **Rationale**: 1 commit = 1 task で履歴が読みやすい / Aphelion git-rules 準拠
 - **Rejected Alternatives**: 大粒度分割（履歴が読みにくい）
 
+### ADR-008: Tweaks 機能の本番固定化
+- **Context**:
+  - モック期 (Discovery / Delivery 初期) は `Tweaks` を 7 項目すべてランタイム可変として実装した
+  - 本番運用フェーズ (2026-05-04 時点で Vercel 上に公開済み) では、ターゲット (3〜5 歳児 + 保護者) に対して調整 UI の選択肢が多すぎ、保護者の認知負荷を上げる懸念がある
+  - 文字サイズ / アクセント色 / フォントは「読みやすさ」より全体トーンに影響するため、プロダクト主導で決め打ちしたい
+  - 将来カラースキーマ刷新時にユーザーごとの保存値が新スキーマと整合しなくなるリスクがある
+- **Decision**:
+  - `Tweaks` 型から `fontSize` / `accent` / `font` の 3 フィールドを完全削除し、UI（TweaksPanel / ViewerBar の文字サイズ ± ボタン）からも除去する
+  - `--terracotta: #E07856` / `--font-body` (M PLUS Rounded 1c) / `--font-display` (同) / `--font-size-body: 26px` を `tokens.css` の `:root` で固定宣言する
+  - Provider のランタイム CSS 変数書換 useEffect (accent / font) を 2 本削減し、残るは `night` クラスと `no-ruby` クラスの同期のみとする
+  - `index.html` のフォント `<link>` から不要フォント (Klee One / Hachi Maru Pop / Zen Maru Gothic / Shippori Mincho / Kosugi Maru / BIZ UDPGothic) を削除し、M PLUS Rounded 1c のみ残す
+  - 削除対象モジュール: `TweakColor.tsx` / `TweakSelect.tsx` / `TweakSlider.tsx` / `accent-presets.ts` / `font-presets.ts`
+- **Rationale**:
+  - バンドルサイズ縮小（5 ファイル削除 + 2 useEffect 削減 + 不要フォント `<link>` 削除）
+  - UI 認知負荷軽減（4 セクション → 2 セクション、4 操作のみ）
+  - 将来のカラースキーマ刷新は `tokens.css` 1 ファイルの編集で完結（Provider への分散コードを廃した結果）
+  - 本文 26px 固定により 3〜5 歳児に適した読みやすさを既定化（モック既定 22px から拡大）
+- **Rejected Alternatives**:
+  - **ストアは残し UI のみ削除**: 再利用予定が不明なまま型・ストア・useEffect を残すのは過剰。型を削ることで型エラーが下流に伝播し、削除漏れを TS が検出してくれるメリットも享受できない
+  - **localStorage マイグレーションスクリプト**: `normalizeTweaks` が whitelist 方式 (4 キー以外を黙殺) のため、古いキー (fontSize / accent / font) は次回保存時に自然消滅する。専用マイグレーションは不要
+
 ---
 
 ## AGENT_RESULT
@@ -717,7 +756,7 @@ ARTIFACTS:
   - docs/ARCHITECTURE.md
 TECH_STACK: TypeScript 5, React 18, Vite 5, pnpm 9, Vitest 1, Playwright 1.44, ESLint 8, Prettier 3
 TECH_STACK_CHANGED: false
-PHASES: 9
-TASKS: 28
-NEXT: scaffolder
+PHASES: 5
+TASKS: 6
+NEXT: developer
 ```

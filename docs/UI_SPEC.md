@@ -7,6 +7,7 @@
 > Last updated: 2026-05-04
 > Update history:
 >   - 2026-05-04: Initial draft (ux-designer / Delivery Flow Light プラン / lightweight visual default 適用)
+>   - 2026-05-04: Tweaks パネル / ViewerBar の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントの UI 削除と固定化)
 
 ## 1. Design Policy
 
@@ -216,9 +217,12 @@ flowchart LR
 
 #### Layout Structure (ViewerA: 見開き)
 
+> Updated: 2026-05-04 — ViewerBar から「あ- / あ+ (文字サイズ ±)」を削除。
+> 文字サイズは 26px 固定。
+
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ ◀ 赤ずきん [グリム童話]    ふりがな[ON] あ-あ+ 夜モード A|B  ✕ 閉じる │
+│ ◀ 赤ずきん [グリム童話]         ふりがな[ON] 夜モード A|B  ✕ 閉じる   │
 ├───────────────────────────────────────────────────────────────────────┤
 │ ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░ (進捗バー 4px, 紅褐色)              │
 ├───────────────────────────────────────────────────────────────────────┤
@@ -240,7 +244,7 @@ flowchart LR
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ ◀ 赤ずきん [グリム童話]    ふりがな[ON] あ-あ+ 夜モード A|B  ✕ 閉じる │
+│ ◀ 赤ずきん [グリム童話]         ふりがな[ON] 夜モード A|B  ✕ 閉じる   │
 ├───────────────────────────────────────────────────────────────────────┤
 │ ▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░ (進捗バー 4px)                       │
 │                                                                       │
@@ -280,7 +284,7 @@ flowchart LR
 
 | # | Component | Type | State | 説明 |
 |---|-----------|------|-------|------|
-| 1 | `<ViewerBar>` | top toolbar | static | タイトル + 著者バッジ / ふりがなトグル / 文字サイズ ± / 夜モード / ViewerSwitcher A|B / 閉じる ✕ |
+| 1 | `<ViewerBar>` | top toolbar | static | タイトル + 著者バッジ / ふりがなトグル / 夜モード / ViewerSwitcher A\|B / 閉じる ✕ (2026-05-04: 文字サイズ ± を削除) |
 | 2 | `<ProgressBar>` | progress | width: pageIndex / pages.length | 4px 高、`--terracotta`（夜は `--mustard`） |
 | 3 | `<ViewerStage>` | content area | per page | ViewerA: `<BookA>` 見開き / ViewerB: `<BookB>` 全画面背景。表紙 (pageIndex=0) は両バリアント共通の `<CoverOverlay>` |
 | 4 | `<NavButton>` | circular button | default / hover (scale 1.07) / disabled (opacity 0.25) | 56×56px (PC) / 44×44px (タブレット) / 38×38px (スマホ)。`aria-label="まえのページ" / "つぎのページ"` |
@@ -298,7 +302,6 @@ flowchart LR
 | ◀ ボタン / ← キー / 画面左半分タップ | `pageIndex--` (min: 0) | flipPrevRight (A) / slideInLeft (B) |
 | Esc キー / ✕ ボタン | `onClose()` → 本棚へ戻る | viewer フェードアウト、本棚スクロール位置保持 |
 | ふりがなトグル | `tweaks.ruby` トグル | `<rt>` 即時表示切替 |
-| あ- / あ+ ボタン | `tweaks.fontSize` ±2 (16〜36) | 本文文字即時拡縮 |
 | 夜モードトグル | `tweaks.night` トグル | 全画面の `.night` クラス切替（昼夜パレット遷移） |
 | ViewerSwitcher A|B | `tweaks.viewerVariant` 切替 | レイアウト即時切替（pageIndex 保持） |
 | ビュアー入場時 | フォーカスを `<NavButton.next>` または「よみはじめる」CTA に移動 | キーボードユーザビリティ (IR-007) |
@@ -324,8 +327,11 @@ flowchart LR
 
 ### SCR-003: Tweaks パネル
 
-**Purpose:** 全ユーザー設定を 1 つのパネルから一括操作する
-**Corresponding UC:** UC-009 〜 UC-014, UC-015
+> Updated: 2026-05-04 — 「色」「フォント」セクションを削除、「よみやすさ」から
+> 文字サイズスライダーを削除。操作対象は 4 項目に縮小。
+
+**Purpose:** 本棚 / ビュアー / ふりがな / 夜モードの 4 項目をパネルから一括操作する
+**Corresponding UC:** UC-009, UC-011, UC-014, UC-015
 **Transitions:** Home / Viewer 上のオーバーレイ
 **URL path:** （オーバーレイ）
 
@@ -333,7 +339,7 @@ flowchart LR
 
 ```
                                               ┌─────────────────────┐
-                                              │ Tweaks         × |  │
+                                              │ Tweaks         ×    │
                                               ├─────────────────────┤
                                               │ レイアウト           │
                                               │  本棚    ◉ A  ○ B   │
@@ -341,19 +347,14 @@ flowchart LR
                                               ├─────────────────────┤
                                               │ よみやすさ           │
                                               │  ふりがな (ルビ) [ON]│
-                                              │  もじサイズ          │
-                                              │  ━━━━━●━━━━━ 22 px  │
                                               │  夜モード        [○]│
-                                              ├─────────────────────┤
-                                              │ 色                  │
-                                              │  アクセント          │
-                                              │  ●  ●  ●  ●         │
-                                              ├─────────────────────┤
-                                              │ フォント             │
-                                              │  [▼ やわらか丸ゴシ ] │
                                               └─────────────────────┘
                                               （右下 sticky / 折畳可能）
 ```
+
+> 削除済み (2026-05-04): 「もじサイズ」スライダー / 「色」セクション (アクセント) /
+> 「フォント」セクション。これらは本番運用で固定値となる
+> (文字サイズ 26px / アクセント `#E07856` テラコッタ / フォント `M PLUS Rounded 1c`)。
 
 #### Component Details
 
@@ -362,10 +363,11 @@ flowchart LR
 | 1 | `<TweakSection>` | grouping | static | カテゴリ見出し + 子要素を縦積み |
 | 2 | `<TweakRadio>` | radio segment | selected / not | 「本棚 A/B」「ビュアー A/B」用 |
 | 3 | `<TweakToggle>` | switch | on / off | 「ふりがな」「夜モード」用、`role="switch"` + `aria-checked` |
-| 4 | `<TweakSlider>` | slider | value 16〜36 step 2 | 文字サイズ。`<input type="range">` ベース、`aria-valuemin/max/now` |
-| 5 | `<TweakColor>` | color swatches | selected | アクセント色 4 色から選択（モック CSS の `--terracotta`/`--matcha-deep`/`--sky` 系から候補抽出 → TBD-001） |
-| 6 | `<TweakSelect>` | dropdown | selected | フォント 6 プリセット選択 (`<select>` ベース、ラベル日本語) |
-| 7 | パネルクローズ | button | static | × ボタン（44×44px） |
+| 4 | パネルクローズ | button | static | × ボタン（44×44px） |
+
+> 削除済みコンポーネント (2026-05-04): `<TweakSlider>` (文字サイズ) / `<TweakColor>` (アクセント) /
+> `<TweakSelect>` (フォント)。対応するソースファイル (`src/components/tweaks/TweakSlider.tsx`,
+> `TweakColor.tsx`, `TweakSelect.tsx`) も削除する。
 
 #### Interactions
 
@@ -450,7 +452,7 @@ flowchart LR
 ### SCR-003 (Tweaks)
 - パネルに `role="dialog"` + `aria-labelledby="tweaks-title"`
 - 各操作要素に明示的な `<label>` または `aria-labelledby`
-- スライダーは `aria-valuetext="22 ピクセル"` 等で値を音声化
+- (2026-05-04 更新: 文字サイズスライダーは廃止。残存操作はラジオ + トグルのみ)
 
 ### 共通
 - すべてのインタラクティブ要素に `:focus-visible` で 2px outline (terracotta)
