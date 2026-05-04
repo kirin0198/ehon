@@ -23,7 +23,7 @@ type Props = {
 
 export function ViewerA(props: Props) {
   const { story, onClose, ruby, fontSize, night } = props;
-  const { pageIndex, total, flipDir, go } = useViewerNav(story.pages.length, onClose);
+  const { pageIndex, total, flipDir, isFlipping, go } = useViewerNav(story.pages.length, onClose);
   const isCover = pageIndex === 0;
   const page = isCover ? null : story.pages[pageIndex - 1];
 
@@ -51,7 +51,7 @@ export function ViewerA(props: Props) {
         <button
           type="button"
           className="eh-viewer-nav prev"
-          disabled={pageIndex === 0}
+          disabled={pageIndex === 0 || isFlipping}
           onClick={() => go(-1)}
           aria-label="まえのページ"
         >
@@ -96,7 +96,7 @@ export function ViewerA(props: Props) {
         <button
           type="button"
           className="eh-viewer-nav next"
-          disabled={pageIndex >= total - 1}
+          disabled={pageIndex >= total - 1 || isFlipping}
           onClick={() => go(1)}
           aria-label="つぎのページ"
         >

@@ -8,6 +8,8 @@ export type ViewerNav = {
   pageIndex: number;
   total: number;
   flipDir: FlipDir;
+  /** フリップアニメーションロック中は true。ナビボタンの disabled 制御に利用する */
+  isFlipping: boolean;
   go: (delta: number) => void;
 };
 
@@ -16,6 +18,9 @@ const FLIP_LOCK_MS = 500;
 export function useViewerNav(totalPages: number, onClose: () => void): ViewerNav {
   const [pageIndex, setPageIndex] = useState(0);
   const [flipDir, setFlipDir] = useState<FlipDir>(null);
+  // フリップロック: state で管理することでボタンの disabled 属性に反映し、
+  // Playwright 等の E2E ツールがロック完了を状態ベースで待てるようにする
+  const [isFlipping, setIsFlipping] = useState(false);
   const flippingRef = useRef(false);
   const total = totalPages + 1; // 表紙 + 本文
 
@@ -25,11 +30,13 @@ export function useViewerNav(totalPages: number, onClose: () => void): ViewerNav
       const next = pageIndex + delta;
       if (next < 0 || next >= total) return;
       flippingRef.current = true;
+      setIsFlipping(true);
       setFlipDir(delta > 0 ? 'next' : 'prev');
       // ページ更新は次フレームで行うことで CSS アニメ開始のチャンスを与える
       setTimeout(() => setPageIndex(next), 0);
       setTimeout(() => {
         setFlipDir(null);
+        setIsFlipping(false);
         flippingRef.current = false;
       }, FLIP_LOCK_MS);
     },
@@ -46,5 +53,5 @@ export function useViewerNav(totalPages: number, onClose: () => void): ViewerNav
     return () => window.removeEventListener('keydown', onKey);
   }, [go, onClose]);
 
-  return { pageIndex, total, flipDir, go };
+  return { pageIndex, total, flipDir, isFlipping, go };
 }
