@@ -577,6 +577,26 @@ Implementation Phase 9: Optional (URL クエリ, FR-020 / UC-019, Could)
 | `index.html` | Vite エントリ HTML、`<title>えほんやさん</title>`、OGP メタタグ、フォント `<link>` | scaffolder |
 | `vercel.json` | SPA リライト | Operations Flow `infra-builder` |
 
+#### vercel.json — SPA fallback rewrite の方針
+
+- 現行の SPA fallback rewrite パターン: `/:path*` → `/index.html`
+- `framework: "vite"` を明示し、Vercel の Vite preset を有効化する
+- Vercel は **filesystem-first** で URL を解決する (静的ファイル → headers → rewrites の順)
+  - `dist/assets/*.js`, `dist/favicon.svg` 等のビルド成果物は rewrites より先に解決されるため、
+    `source` 側でアセット拡張子を除外する必要はない
+- `/api/` ルート追加時の方針: 本アプリは現状 API ルートを持たない。将来 BFF / LLM サーバルート
+  (`/api/llm-generate` 等) を追加する場合は、Vercel の Functions (`api/` ディレクトリ) として
+  実装すれば rewrites より優先されるため、SPA fallback と衝突しない
+- 注意 (試行錯誤の経緯): Vercel の `rewrites.source` は path-to-regexp DSL を使うが、
+  以下のパターンは検証で機能しなかった:
+  - `/((?!.*\..*|api/.*).*)` (negative lookahead 二段) — 旧パターン
+  - `/((?!api/).*)` (negative lookahead 単段)
+  - `/(.*)` (regex キャプチャ。`cleanUrls: true` と併用で 404)
+- 解決策: path-to-regexp の named param 形式 `/:path*` に切替え + `cleanUrls` を削除 +
+  `framework: "vite"` を明示。詳細は `docs/design-notes/vercel-spa-rewrite-fix.md` を参照
+
+> 関連: `docs/design-notes/vercel-spa-rewrite-fix.md`
+
 ### tsconfig 主要設定
 
 ```jsonc

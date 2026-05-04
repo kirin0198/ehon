@@ -2,13 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": null,
+  "framework": "vite",
   "installCommand": "npm ci",
-  "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/((?!.*\\..*|api/.*).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
