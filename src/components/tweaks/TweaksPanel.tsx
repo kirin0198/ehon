@@ -1,15 +1,12 @@
-// Tweaks パネル本体: 全設定を一括操作する右下フローティングオーバーレイ
+// Tweaks パネル本体: 設定を一括操作する右下フローティングオーバーレイ
+// 本番固定化 (2026-05-04) により 2 セクション・4 操作のみに縮小。
+// 削除: 色セクション (TweakColor) / フォントセクション (TweakSelect) /
+//        よみやすさセクションの文字サイズスライダー (TweakSlider)
 import { useEffect } from 'react';
 import { TweakSection } from './TweakSection';
 import { TweakRadio } from './TweakRadio';
 import { TweakToggle } from './TweakToggle';
-import { TweakSlider } from './TweakSlider';
-import { TweakColor } from './TweakColor';
-import { TweakSelect } from './TweakSelect';
 import { useTweaks } from '../../stores/tweaks-context';
-import type { FontPreset } from '../../types/tweaks';
-import { FONT_PRESETS } from '../../lib/font-presets';
-import { FONT_SIZE_MAX, FONT_SIZE_MIN, FONT_SIZE_STEP } from '../../stores/tweaks-defaults';
 
 type Props = {
   open: boolean;
@@ -30,11 +27,6 @@ export function TweaksPanel({ open, onClose }: Props) {
   }, [open, onClose]);
 
   if (!open) return null;
-
-  const fontOptions = (Object.keys(FONT_PRESETS) as FontPreset[]).map((k) => ({
-    value: k,
-    label: FONT_PRESETS[k].label,
-  }));
 
   return (
     <div
@@ -90,6 +82,7 @@ export function TweaksPanel({ open, onClose }: Props) {
         </button>
       </header>
 
+      {/* レイアウトセクション: 本棚バリアント / ビュアーバリアント */}
       <TweakSection title="レイアウト">
         <TweakRadio
           label="本棚"
@@ -111,38 +104,14 @@ export function TweaksPanel({ open, onClose }: Props) {
         />
       </TweakSection>
 
+      {/* よみやすさセクション: ふりがな / 夜モード (文字サイズスライダーは固定化により削除) */}
       <TweakSection title="よみやすさ">
         <TweakToggle
           label="ふりがな (ルビ)"
           value={tweaks.ruby}
           onChange={(v) => setTweak('ruby', v)}
         />
-        <TweakSlider
-          label="もじサイズ"
-          value={tweaks.fontSize}
-          min={FONT_SIZE_MIN}
-          max={FONT_SIZE_MAX}
-          step={FONT_SIZE_STEP}
-          onChange={(v) => setTweak('fontSize', v)}
-        />
         <TweakToggle label="夜モード" value={tweaks.night} onChange={(v) => setTweak('night', v)} />
-      </TweakSection>
-
-      <TweakSection title="色">
-        <TweakColor
-          label="アクセント"
-          value={tweaks.accent}
-          onChange={(v) => setTweak('accent', v)}
-        />
-      </TweakSection>
-
-      <TweakSection title="フォント">
-        <TweakSelect
-          label="書体"
-          value={tweaks.font}
-          options={fontOptions}
-          onChange={(v) => setTweak('font', v)}
-        />
       </TweakSection>
     </div>
   );

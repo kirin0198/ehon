@@ -1,16 +1,15 @@
-// ビュアー上部ツールバー: タイトル / ふりがな / 文字サイズ / 夜モード / バリアント切替 / 閉じる
+// ビュアー上部ツールバー: タイトル / ふりがな / 夜モード / バリアント切替 / 閉じる
+// 本番固定化 (2026-05-04) により「あ-」「あ+」ボタンと文字サイズ数値表示を削除。
+// fontSize / setFontSize props も削除。
 import type { Story } from '../../types/story';
 import type { Tweaks } from '../../types/tweaks';
-import { FONT_SIZE_MAX, FONT_SIZE_MIN, FONT_SIZE_STEP } from '../../stores/tweaks-defaults';
 
 type Props = {
   story: Story;
   onClose: () => void;
   ruby: boolean;
-  fontSize: number;
   night: boolean;
   setRuby: (v: boolean) => void;
-  setFontSize: (v: number) => void;
   setNight: (v: boolean) => void;
   variant: Tweaks['viewerVariant'];
   setVariant: (v: Tweaks['viewerVariant']) => void;
@@ -20,17 +19,12 @@ export function ViewerBar({
   story,
   onClose,
   ruby,
-  fontSize,
   night,
   setRuby,
-  setFontSize,
   setNight,
   variant,
   setVariant,
 }: Props) {
-  const dec = () => setFontSize(Math.max(FONT_SIZE_MIN, fontSize - FONT_SIZE_STEP));
-  const inc = () => setFontSize(Math.min(FONT_SIZE_MAX, fontSize + FONT_SIZE_STEP));
-
   return (
     <div className="eh-viewer-bar">
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -57,47 +51,6 @@ export function ViewerBar({
         >
           ふりがな {ruby ? 'あり' : 'なし'}
         </button>
-        <div className="eh-viewer-tool" style={{ padding: '4px 6px', gap: 4 }}>
-          <span style={{ padding: '0 6px' }}>文字</span>
-          <button
-            type="button"
-            onClick={dec}
-            aria-label="文字を小さく"
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontWeight: 700,
-              fontSize: 14,
-              padding: '0 6px',
-            }}
-          >
-            小
-          </button>
-          <span
-            style={{ fontSize: 12, opacity: 0.7, minWidth: 24, textAlign: 'center' }}
-            aria-live="polite"
-          >
-            {fontSize}
-          </span>
-          <button
-            type="button"
-            onClick={inc}
-            aria-label="文字を大きく"
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontWeight: 700,
-              fontSize: 18,
-              padding: '0 6px',
-            }}
-          >
-            大
-          </button>
-        </div>
         <button
           type="button"
           className={'eh-viewer-tool' + (night ? ' active' : '')}

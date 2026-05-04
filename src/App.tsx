@@ -1,5 +1,6 @@
 // アプリのルートコンポーネント。
 // 本棚 / ビュアー / Tweaks パネルを統括する。
+// 本番固定化 (2026-05-04) により fontSize / setFontSize の受け渡しを削除。
 import { useState } from 'react';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { TweaksProvider, useTweaks } from './stores/tweaks-context';
@@ -37,10 +38,8 @@ function AppShell() {
           story={story}
           onClose={() => setOpenId(null)}
           ruby={tweaks.ruby}
-          fontSize={tweaks.fontSize}
           night={tweaks.night}
           setRuby={(v) => setTweak('ruby', v)}
-          setFontSize={(v) => setTweak('fontSize', v)}
           setNight={(v) => setTweak('night', v)}
           variant={tweaks.viewerVariant}
           setVariant={(v) => setTweak('viewerVariant', v)}

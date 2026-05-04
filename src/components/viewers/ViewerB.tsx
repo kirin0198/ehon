@@ -1,5 +1,6 @@
 // ビュアーバリアント B: 全画面背景 (背景 = 挿絵 / 下部 = テキストカード)
-// モック ViewerB を TS 化。
+// 本番固定化 (2026-05-04) により fontSize / setFontSize props を削除。
+// 本文サイズは tokens.css の --font-size-body (26px) を CSS で参照。
 import type { Story } from '../../types/story';
 import type { Tweaks } from '../../types/tweaks';
 import { useViewerNav } from '../../hooks/useViewerNav';
@@ -12,17 +13,15 @@ type Props = {
   story: Story;
   onClose: () => void;
   ruby: boolean;
-  fontSize: number;
   night: boolean;
   setRuby: (v: boolean) => void;
-  setFontSize: (v: number) => void;
   setNight: (v: boolean) => void;
   variant: Tweaks['viewerVariant'];
   setVariant: (v: Tweaks['viewerVariant']) => void;
 };
 
 export function ViewerB(props: Props) {
-  const { story, onClose, ruby, fontSize, night } = props;
+  const { story, onClose, ruby, night } = props;
   const { pageIndex, total, flipDir, isFlipping, go } = useViewerNav(story.pages.length, onClose);
   const isCover = pageIndex === 0;
   const page = isCover ? null : story.pages[pageIndex - 1];
@@ -76,7 +75,8 @@ export function ViewerB(props: Props) {
             <CoverPage story={story} onStart={() => go(1)} overlay />
           ) : (
             // <ruby>/<rt> を常に DOM に保持し、CSS の .no-ruby rt { display:none } で表示制御 (SPEC R-005)
-            <div className="book-b-text-card" style={{ fontSize }}>
+            // 本文サイズは var(--font-size-body) = 26px 固定 (ADR-008)
+            <div className="book-b-text-card" style={{ fontSize: 'var(--font-size-body)' }}>
               <RubyText text={page!.ruby} />
             </div>
           )}
