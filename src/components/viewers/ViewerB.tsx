@@ -1,6 +1,8 @@
 // ビュアーバリアント B: 全画面背景 (背景 = 挿絵 / 下部 = テキストカード)
 // 本番固定化 (2026-05-04) により fontSize / setFontSize props を削除。
 // 本文サイズは tokens.css の --font-size-body (26px) を CSS で参照。
+// Phase 1 (2026-05-06): .eh-viewer-stage にスワイプジェスチャを追加 (ADR-010)
+import { useSwipeable } from 'react-swipeable';
 import type { Story } from '../../types/story';
 import type { Settings } from '../../types/settings';
 import { useViewerNav } from '../../hooks/useViewerNav';
@@ -30,6 +32,20 @@ export function ViewerB(props: Props) {
     ? `linear-gradient(135deg, ${story.coverColor}, ${story.coverAccent})`
     : page!.bg;
 
+  // タッチスワイプでページ送り (ADR-010 / R-018)
+  // - delta=50: 50px 以上の横方向の動きのみ判定
+  // - preventScrollOnSwipe=false: 縦スクロールをネイティブに任せる
+  // - trackMouse=false: マウスドラッグでは反応しない
+  // - ViewerBar には装着しない (ボタンタップとの衝突回避)
+  // - isFlipping 中の go は useViewerNav 内で自動的に無視される
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => go(1),
+    onSwipedRight: () => go(-1),
+    delta: 50,
+    preventScrollOnSwipe: false,
+    trackMouse: false,
+  });
+
   return (
     <div
       className={`eh-viewer ${night ? 'night' : ''} ${ruby ? '' : 'no-ruby'}`}
@@ -50,7 +66,8 @@ export function ViewerB(props: Props) {
           style={{ width: `${((pageIndex + 1) / total) * 100}%` }}
         />
       </div>
-      <div className="eh-viewer-stage" style={{ padding: 0 }}>
+      {/* スワイプハンドラを本文ステージのみに装着。ViewerBar は含まない (R-018) */}
+      <div className="eh-viewer-stage" style={{ padding: 0 }} {...swipeHandlers}>
         <button
           type="button"
           className="eh-viewer-nav prev"
