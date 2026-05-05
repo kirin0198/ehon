@@ -11,8 +11,26 @@
 // react-swipeable は trackMouse=false のため PC デスクトップでは非対応 (設計通り)。
 import { test, expect } from '@playwright/test';
 
-// スワイプを TouchScreen API で発火するヘルパ
-// (Playwright の page.touchscreen.swipe は存在しないため touch イベントを dispatch)
+// スワイプを合成する E2E ヘルパ。
+//
+// 経緯 (2026-05-05):
+//   旧実装は `new TouchEvent(...)` / `new Touch(...)` を `page.evaluate` 内で
+//   呼んでいたが、WebKit (Safari) はこれらのコンストラクタを直接呼ぶことを
+//   許可しておらず "Illegal constructor" で失敗していた (chromium-pc は通る)。
+//   一方、本アプリが使う react-swipeable v7 は touch / mouse のみリッスンし
+//   (Pointer Events 非対応)、ViewerA/B では `trackMouse: false` のため
+//   mouse ドラッグでも合成不可。さらに viewer 側で `delta: 50` の閾値を持つ。
+//
+// 解決策:
+//   react-swipeable のイベント判定は `"touches" in event` のみ
+//   (instanceof TouchEvent ではない) なので、生の `Event('touchstart' …)` に
+//   `Object.defineProperty` で `touches` / `targetTouches` / `changedTouches`
+//   を後付けすれば WebKit でも安全に発火できる。
+//   touches 内の各 Touch も plain object でよく、`clientX/clientY` さえ
+//   揃っていれば react-swipeable は座標を読み取れる。
+//
+//   さらに、delta=50 の閾値内側で複数ステップに分けて touchmove を発火する
+//   ことで、ライブラリ側の deltaX 累積計算をより自然な軌跡で進める。
 async function swipe(
   page: import('@playwright/test').Page,
   locator: import('@playwright/test').Locator,
@@ -27,36 +45,57 @@ async function swipe(
   const endX = startX + deltaX;
   const endY = startY + deltaY;
 
-  // TouchScreen API でスワイプをエミュレート
-  await page.touchscreen.tap(startX, startY); // touchstart
-  // touchmove: 複数ポイントで移動量を react-swipeable に伝える
   await page.evaluate(
     ({ sx, sy, ex, ey }: { sx: number; sy: number; ex: number; ey: number }) => {
       const target = document.elementFromPoint(sx, sy) ?? document.body;
-      const mkTouch = (x: number, y: number): Touch =>
-        new Touch({ identifier: 1, target, clientX: x, clientY: y });
 
-      target.dispatchEvent(
-        new TouchEvent('touchstart', {
-          bubbles: true,
-          cancelable: true,
-          touches: [mkTouch(sx, sy)],
-        }),
-      );
-      target.dispatchEvent(
-        new TouchEvent('touchmove', {
-          bubbles: true,
-          cancelable: true,
-          touches: [mkTouch(ex, ey)],
-        }),
-      );
-      target.dispatchEvent(
-        new TouchEvent('touchend', {
-          bubbles: true,
-          cancelable: true,
-          changedTouches: [mkTouch(ex, ey)],
-        }),
-      );
+      // WebKit でも安全な touch オブジェクト生成 (new Touch を使わない)
+      const mkTouch = (x: number, y: number): unknown => ({
+        identifier: 1,
+        target,
+        clientX: x,
+        clientY: y,
+        pageX: x,
+        pageY: y,
+        screenX: x,
+        screenY: y,
+        radiusX: 1,
+        radiusY: 1,
+        rotationAngle: 0,
+        force: 1,
+      });
+
+      // `Event` に touches 系を後付けして dispatch。
+      // react-swipeable は `"touches" in event` で判定するため
+      // TouchEvent 実体である必要はない。
+      const fireTouch = (
+        type: 'touchstart' | 'touchmove' | 'touchend',
+        x: number,
+        y: number,
+        isEnd = false,
+      ): void => {
+        const ev = new Event(type, { bubbles: true, cancelable: true });
+        const touchList = isEnd ? [] : [mkTouch(x, y)];
+        const changed = [mkTouch(x, y)];
+        Object.defineProperty(ev, 'touches', { value: touchList, configurable: true });
+        Object.defineProperty(ev, 'targetTouches', { value: touchList, configurable: true });
+        Object.defineProperty(ev, 'changedTouches', { value: changed, configurable: true });
+        target.dispatchEvent(ev);
+      };
+
+      // 開始 → 中間 → 終了 の 3 段階で touchmove を発火
+      // (delta=50 の閾値超えを安定させるため、移動量が大きい場合は刻む)
+      fireTouch('touchstart', sx, sy);
+
+      const steps = 4;
+      for (let i = 1; i <= steps; i += 1) {
+        const t = i / steps;
+        const cx = sx + (ex - sx) * t;
+        const cy = sy + (ey - sy) * t;
+        fireTouch('touchmove', cx, cy);
+      }
+
+      fireTouch('touchend', ex, ey, true);
     },
     { sx: startX, sy: startY, ex: endX, ey: endY },
   );
