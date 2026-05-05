@@ -1,10 +1,12 @@
 # Specification: えほんやさん（Ehon）
 
 > Created: 2026-05-04
-> Last updated: 2026-05-04
+> Last updated: 2026-05-05
 > Source: DISCOVERY_RESULT.md (2026-05-04), INTERVIEW_RESULT.md (2026-05-04), SCOPE_PLAN.md (2026-05-04), project-rules.md (2026-05-04)
 > Update history:
 >   - 2026-05-04: Initial draft (spec-designer / Delivery Flow Light プラン)
+>   - 2026-05-04: Tweaks 機能の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントを固定化、UC-010/012/013 削除、Tweaks 型を 4 フィールドに縮小)
+>   - 2026-05-05: Tweaks 機能の完全削除 (developer / TweaksPanel/Launcher/Provider/Context/Reducer 削除、useSettingsStore 置換、UC-014 削除マーカー化)
 
 ## 0. サービス名（正式決定）
 
@@ -40,7 +42,7 @@
 - ふりがな ON/OFF（`<ruby>` 構造維持 + CSS 制御）
 - 文字サイズ 16〜36px / 2px ステップ、夜モード ON/OFF
 - フォントプリセット 6 種、アクセント色 4 色程度の選択（Should）
-- Tweaks 設定の localStorage 永続化（フォント / ふりがな / 文字サイズ / 夜モード / アクセント色 / 本棚バリアント / ビュアーバリアント）
+- ユーザー設定（本棚バリアント / ビュアーバリアント / ふりがな / 夜モード）の localStorage 永続化
 - 物語データはビルド時静的（`src/data/stories.ts`）
 - レスポンシブ（PC / タブレット 〜900px / スマホ 〜560px）
 - アクセシビリティ（WCAG 2.1 AA 相当 / キーボード完結 / `<ruby>` SR 互換 / `prefers-reduced-motion` / コントラスト 4.5:1 / `@media (hover: none)`）
@@ -63,7 +65,7 @@
 | フレームワーク | React 18 | 既存モックが React 18 + Babel Standalone CDN のため踏襲。コンポーネントモデルがシンプルで個人プロジェクトに最適 |
 | ビルド | Vite | 高速 HMR、TS/JSX ネイティブサポート、Vercel との相性良好 |
 | パッケージ管理 | pnpm | project-rules.md で推奨。ディスク効率と並列性 |
-| 状態管理 | React Context + `useReducer` + localStorage | Zustand 候補もあるが、Tweaks 1 種類のみで Context で十分。依存削減 |
+| 状態管理 | 軽量カスタム hook (`useSettingsStore`) + localStorage | Settings 1 種のみ。Provider/Context/Reducer を排し `useState` + `useEffect` で完結（ADR-009） |
 | ルーティング | なし（単一画面 + 状態切替） | 本棚/ビュアーは `openId` 状態で切替するため不要。URL クエリは限定的に使用（FR-020） |
 | ふりがな処理 | 自前パーサ (`src/lib/ruby-parser.ts`) | `桃太郎{ももたろう}` 記法 → `<ruby>` 変換。外部依存なし |
 | スタイリング | CSS Custom Properties（モック踏襲） + CSS Modules | デザイントークン（`--paper`, `--ink`, `--terracotta` 他）はそのまま `:root` に移植 |
@@ -77,7 +79,7 @@
 ### 不採用候補と却下理由
 
 - Next.js: 静的単一ページのため SSR / Routing の便益なし。バンドル増を回避
-- Zustand: Tweaks の単一ストアのみで Context + Reducer で十分。依存削減
+- Zustand: Settings 1 種で hook で十分。ライブラリ依存を増やさず hook で完結（ADR-009）
 - Tailwind CSS: モックの CSS 変数体系を優先。導入はスタイル方針の二重化を招く
 - Babel Standalone (現モック): 本番ビルド前提に切り替えるため非採用
 
@@ -115,11 +117,11 @@
 | UC-007 | ビュアーを閉じて本棚に戻る（Esc / 戻るボタン） | P-1 / P-2 | Must |
 | UC-008 | ビュアーレイアウトを切り替える（ViewerA ⇔ ViewerB） | P-2 | Must |
 | UC-009 | ふりがなを ON/OFF する | P-2 | Must |
-| UC-010 | 文字サイズを調整する | P-2 | Must |
+| UC-010 | (削除: 文字サイズは 26px に固定 / 2026-05-04) | — | — |
 | UC-011 | 夜モードを ON/OFF する | P-2 | Must |
-| UC-012 | フォントプリセットを切り替える | P-2 | Should |
-| UC-013 | アクセント色を切り替える | P-2 | Should |
-| UC-014 | Tweaks パネルで設定を一括操作する | P-2 | Should |
+| UC-012 | (削除: フォントは「やわらか丸ゴシック」固定 / 2026-05-04) | — | — |
+| UC-013 | (削除: アクセント色はテラコッタ固定 / 2026-05-04) | — | — |
+| UC-014 | Tweaks パネルで本棚 / ビュアー / ふりがな / 夜モードの 4 項目を一括操作する | P-2 | Must |
 | UC-015 | 設定を再訪時に復元する（localStorage） | P-1 / P-2 | Must |
 | UC-016 | レスポンシブ環境で快適に閲覧する | 全 | Must |
 | UC-017 | キーボードのみで全操作を完結する | P-2（a11y） | Must |
@@ -136,7 +138,7 @@
   2. アプリは `src/data/stories.ts` から 6 作品を読み込む
   3. 既定の本棚バリアント（ShelfA: 立てかけ書架）で一覧を表示
 - **例外フロー**:
-  - localStorage 利用不可時 → デフォルト Tweaks (`TWEAK_DEFAULTS`) で表示。エラー表示はしない（IR-002）
+  - localStorage 利用不可時 → デフォルト Settings (`SETTINGS_DEFAULTS`) で表示。エラー表示はしない（IR-002）
 - **受入基準**:
   - 6 作品すべての表紙が表示される
   - 各表紙には絵文字プレースホルダー（または実画像）+ タイトル + 著者（「グリム童話」「日本昔話」）が表示される
@@ -146,9 +148,8 @@
 - **概要**: ShelfA（立てかけ書架）と ShelfB（表紙ならべ）を切り替える
 - **前提条件**: 本棚画面を表示中
 - **正常フロー**:
-  1. 本棚右上のセグメントピル「立てかけ / 表紙グリッド」を操作
-  2. または Tweaks パネルから切替
-  3. レイアウトが即座に切り替わり localStorage に永続化
+  1. 本棚右上のセグメントピル「立てかけ / 表紙グリッド」(ShelfSwitcher) を操作
+  2. レイアウトが即座に切り替わり localStorage に永続化
 - **受入基準**:
   - 切替後にリロードしても同じレイアウトで再現される
   - 両バリアント共通で 6 作品すべて表示される
@@ -203,59 +204,76 @@
 
 ### UC-008: ビュアーレイアウトを切り替える
 - **概要**: ViewerA（見開き）と ViewerB（全画面背景）を切り替える
-- **正常フロー**: ビュアーツールバー右の A/B トグル / Tweaks パネル
+- **正常フロー**: ビュアーツールバー (ViewerBar) 右の A/B トグルを操作
 - **受入基準**:
   - 切替時に現在ページ位置を保持
   - 切替設定は localStorage に永続化
 
 ### UC-009: ふりがな ON/OFF
 - **概要**: ルビ表示を切り替える
-- **正常フロー**: Tweaks パネル → ふりがなトグル
+- **正常フロー**: ビュアーツールバー (ViewerBar) の「ふりがな」ボタンを操作
 - **受入基準**:
   - DOM 上の `<ruby>` 構造は維持し、`<rt>` のみ CSS `display: none` で切替
   - スクリーンリーダー（VoiceOver / NVDA）はルビ ON 時に「漢字 → 読み」の順で読み上げる
   - 切替が即座に画面に反映される
 
-### UC-010: 文字サイズ調整
-- **概要**: 本文文字サイズを 16〜36px / 2px ステップで調整
-- **正常フロー**: ビュアーツールバーの ± ボタン / Tweaks パネルのスライダー
-- **受入基準**:
-  - 範囲外への変更は無効化
-  - 値は localStorage に永続化
+### UC-010: (削除 / 2026-05-04)
+
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> 文字サイズは本番運用時に **26px の固定値** とする。Tweaks パネルのスライダー
+> および ViewerBar の ± ボタン / 数値表示は UI から削除する。
+>
+> 経緯と方針は `docs/design-notes/tweaks-simplification.md` を参照。
 
 ### UC-011: 夜モード ON/OFF
 - **概要**: 寝る前読み聞かせ用の暗色テーマ切替
-- **正常フロー**: Tweaks パネル → 夜モードトグル / ビュアーツールバー
+- **正常フロー**: ビュアーツールバー (ViewerBar) の「夜モード」ボタンを操作
 - **受入基準**:
   - `<html>` または `<body>` に `.night` クラスを付与
   - 主要組み合わせのコントラスト比 4.5:1 以上（visual 検証で R-001 を解消）
   - 切替は即座に全画面へ波及
 
-### UC-012: フォントプリセット切替（Should）
-- **概要**: 6 種（rounded / udp / klee / pop / maru / mincho）から選択
-- **受入基準**:
-  - 切替時に `--font-body` / `--font-display` CSS 変数を更新
-  - Google Fonts 取得失敗時は `system-ui, sans-serif` にフォールバック（IR-003）
-  - `font-display: swap` でレイアウトずれを最小化
+### UC-012: (削除 / 2026-05-04)
 
-### UC-013: アクセント色切替（Should）
-- **概要**: 4 色程度のアクセント色から選択
-- **受入基準**:
-  - 切替時に `--terracotta`（または相当 CSS 変数）を更新
-  - 候補数・色値の正式確定は ux-designer / visual-designer
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> フォントは本番運用時に **「やわらか丸ゴシック」 (`rounded` プリセット =
+> M PLUS Rounded 1c) の固定値** とする。Tweaks パネルのフォント選択 UI と
+> 関連プリセット定義 (`src/lib/font-presets.ts`) は削除する。CSS 変数
+> `--font-body` / `--font-display` は `tokens.css` で固定値として宣言する。
 
-### UC-014: Tweaks パネル一括操作（Should）
-- **概要**: 全 Tweaks を 1 つのパネルから操作
-- **受入基準**:
-  - Tweaks パネルから FR-008 〜 FR-013 がすべて操作可能
-  - パネルは画面右下のフローティングで、開閉可能
-  - **モックの `tweaks-panel.jsx` ホスト連携プロトコル（`__edit_mode_*` postMessage）は本実装で再利用しない**
+### UC-013: (削除 / 2026-05-04)
+
+> Updated: 2026-05-04 (Tweaks 機能の本番向け縮小)
+>
+> アクセント色は本番運用時に **テラコッタ `#E07856`** に固定する。
+> Tweaks パネルのアクセント色選択 UI と `src/lib/accent-presets.ts` は削除する。
+> 全体カラースキーマの将来変更は `tokens.css` の `--terracotta` 定義変更で対応する。
+
+### UC-014: (削除: Tweaks パネル一括操作 / 2026-05-05)
+
+> Updated: 2026-05-05 (Tweaks 機能の完全削除 / ADR-009)
+>
+> TweaksPanel / TweaksLauncher は本実装から完全に削除した。
+> 等価操作は以下の既存 UI で提供済み:
+> - 本棚バリアント → ShelfSwitcher (本棚 Header 右)
+> - ビュアーバリアント・ふりがな・夜モード → ViewerBar
+>
+> 経緯と方針は `docs/design-notes/remove-tweaks-panel.md` を参照。
 
 ### UC-015: 設定の永続化（localStorage）
-- **概要**: Tweaks 設定を再訪時に復元
+
+> Updated: 2026-05-05 (Tweaks 完全削除 / キー名を eh.settings に変更)
+
+- **概要**: Settings を再訪時に復元
 - **受入基準**:
-  - キー: `eh.tweaks`（モック踏襲）
-  - 永続化対象: `shelfVariant` / `viewerVariant` / `fontSize` / `ruby` / `night` / `accent` / `font`
+  - キー: `eh.settings`（Tweaks 完全削除に合わせて新規採用）
+  - 永続化対象: `shelfVariant` / `viewerVariant` / `ruby` / `night`
+  - 旧スキーマの余分なキー (`fontSize` / `accent` / `font`) が localStorage に残っていても
+    `normalizeSettings` の whitelist 方式で無視される
+  - 旧キー (`eh.tweaks` / `ehon.tweaks` / `ehon.tweaks.v2`) はユーザー端末に残存しても読まれない。
+    削除もしない (害なし)
   - localStorage 利用不可環境では in-memory フォールバック（IR-002, R-003）
 
 ### UC-016: レスポンシブ
@@ -373,22 +391,34 @@
 | `text` | string | ✓ | 本文プレーンテキスト |
 | `ruby` | string | ✓ | ルビ記法付き本文（`漢字{かんじ}` 形式） |
 
-### Tweaks 型（概念）
+### Settings 型（概念）
+
+> Updated: 2026-05-05 (Tweaks 完全削除 / ADR-009 で Settings に置換)
+>
+> 旧 `Tweaks` 型を `Settings` 型に置換。Provider/Context/Reducer を廃止し
+> `useSettingsStore` custom hook で保持する。
+> 詳細は `docs/design-notes/remove-tweaks-panel.md` を参照。
 
 | Field | Type | 既定値 | 説明 |
 |-------|------|--------|------|
 | `shelfVariant` | "A" \| "B" | "A" | 本棚バリアント |
 | `viewerVariant` | "A" \| "B" | "A" | ビュアーバリアント |
-| `fontSize` | number (16〜36, step 2) | 22 | 本文文字サイズ |
 | `ruby` | boolean | true | ふりがな ON/OFF |
 | `night` | boolean | false | 夜モード |
-| `accent` | string (CSS color) | "#E07856" | アクセント色 |
-| `font` | string (preset key) | "rounded" | フォントプリセット |
+
+### 固定値 (UI 操作不可、本番運用)
+
+| 項目 | 値 | 反映先 |
+|------|---|-------|
+| 本文文字サイズ | 26px | `--font-size-body` (新規 CSS 変数 / `tokens.css`) |
+| アクセント色 | `#E07856` (テラコッタ) | `--terracotta` (`tokens.css`) |
+| フォント (body) | `'M PLUS Rounded 1c', 'BIZ UDPGothic', system-ui, sans-serif` | `--font-body` (`tokens.css`) |
+| フォント (display) | `'Klee One', 'M PLUS Rounded 1c', sans-serif` | `--font-display` (`tokens.css`) |
 
 ### Relationships
 
 - `Story 1 — N Page`（`Story.pages[]`）
-- `Tweaks` は単一インスタンス（ユーザー端末ごとに 1 つ、localStorage `eh.tweaks`）
+- `Settings` は単一インスタンス（ユーザー端末ごとに 1 つ、localStorage `eh.settings`）
 - `Page.scene` は `public/illustrations/{Story.id}/{scene}.webp` のファイルパスを決定する規約キー
 
 ### 物語 6 作品（MVP コンテンツ）
@@ -445,7 +475,7 @@
 | ビュアー (Viewer) | 物語を読む画面 |
 | ViewerA | ビュアーバリアント A: 見開き表現 |
 | ViewerB | ビュアーバリアント B: 全画面背景表現 |
-| Tweaks | ユーザー設定の総称（フォント / ふりがな / 文字サイズ / 夜モード / アクセント色 / バリアント） |
+| Settings | ユーザー設定の総称（本棚バリアント / ビュアーバリアント / ふりがな / 夜モード）。旧称 Tweaks （ADR-009 で置換） |
 | ルビ記法 | `漢字{かんじ}` 形式の独自記法。パーサが `<ruby><rb>漢字</rb><rt>かんじ</rt></ruby>` に変換 |
 | プレースホルダー絵文字 | 実画像不在時のフォールバック表示用 emoji（`Story.placeholderEmoji`） |
 | 表紙ページ | `Story.pages[0]` を表紙扱いするのではなく、ビュアーが先頭に「表紙ページ」を独立して挿入する。表紙 → 本文 1 → 本文 2 ... の順 |
@@ -456,7 +486,7 @@
 
 | # | 項目 | 仮定 | 解決担当 |
 |---|------|------|----------|
-| TBD-001 | アクセント色の UI 露出色数と色値 | モック CSS 変数群から 4 色を `ux-designer` / `visual-designer` で選定 | ux-designer |
+| TBD-001 | (Resolved 2026-05-04) アクセント色は本番で `#E07856` (テラコッタ) に固定。UI 露出は廃止 (UC-013 削除) | — | analyst |
 | TBD-002 | 夜モード `--mustard` のコントラスト 4.5:1 達成可否 | 未達なら夜パレット専用置換色を導入 | ux-designer (lightweight visual default) |
 | TBD-003 | URL クエリでのバリアント切替（FR-020 / UC-019）の MVP 取込 | 実装コスト小であれば取込、大きければ Could のまま | architect |
 | TBD-004 | 再話文の権利表記（フッター文言） | 仮: 「原作: パブリックドメイン / 再話・コード: © 2026 えほんやさん（MIT）」 | spec-designer 仮確定 → doc-writer |
@@ -468,13 +498,15 @@
 ## 11. 受入条件サマリー（Phase 末で再確認）
 
 - [ ] 本棚 → 物語選択 → 表紙 → 全ページ閲覧 → 戻る が E2E で 100% 通過する
-- [ ] 全 Must 機能（FR-001〜010, FR-014〜015, FR-019, FR-021）が動作する
+- [ ] 全 Must 機能（FR-001〜009, FR-011, FR-014〜015, FR-019, FR-021）が動作する
 - [ ] 画像不在でもアプリが破綻せずフォールバックで読み続けられる
 - [ ] localStorage 不在環境でもエラーで停止しない
 - [ ] キーボードのみで本棚 → ビュアー → ページ送り → 戻るが完了する
 - [ ] Lighthouse Accessibility ≥ 95
 - [ ] バンドル初回 JS ≤ 200KB gzipped
 - [ ] 主要組み合わせのコントラスト比 4.5:1 以上（夜モード含む）
+- [ ] (2026-05-04 追加) 本文文字サイズが 26px で固定表示される
+- [ ] (2026-05-05 追加) Tweaks パネル / TweaksLauncher が画面に表示されない
 
 ---
 

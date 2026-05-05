@@ -1,4 +1,6 @@
 // TC-IT: App 全体結合のスモークテスト
+// Tweaks 完全削除 (2026-05-05 / ADR-009) により TweaksProvider ラップ不要。
+// TC-IT-003 (Tweaks パネル開閉) は削除。
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -25,15 +27,5 @@ describe('App smoke', () => {
     await user.click(screen.getByRole('button', { name: '赤ずきん をひらく' }));
     act(() => vi.runAllTimers());
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
-  });
-
-  it('TC-IT-003 Tweaks ⚙ ボタンでパネル開閉', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Tweaks せってい' }));
-    expect(screen.getByRole('button', { name: 'Tweaks をとじる' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Tweaks をとじる' }));
-    // Tweaks をとじた後、Tweaks をひらく が再表示される
-    expect(screen.getByRole('button', { name: 'Tweaks せってい' })).toBeInTheDocument();
   });
 });

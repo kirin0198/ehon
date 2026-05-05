@@ -1,7 +1,8 @@
 // ビュアーバリアント A: 見開き (左ページ=絵 / 右ページ=文)
-// モック ViewerA を TS 化。挿絵は IllustWithFallback で実画像 + フォールバック対応。
+// 本番固定化 (2026-05-04) により fontSize / setFontSize props を削除。
+// 本文サイズは tokens.css の --font-size-body (26px) を CSS で参照。
 import type { Story } from '../../types/story';
-import type { Tweaks } from '../../types/tweaks';
+import type { Settings } from '../../types/settings';
 import { useViewerNav } from '../../hooks/useViewerNav';
 import { ViewerBar } from './ViewerBar';
 import { CoverPage } from './CoverPage';
@@ -12,17 +13,15 @@ type Props = {
   story: Story;
   onClose: () => void;
   ruby: boolean;
-  fontSize: number;
   night: boolean;
   setRuby: (v: boolean) => void;
-  setFontSize: (v: number) => void;
   setNight: (v: boolean) => void;
-  variant: Tweaks['viewerVariant'];
-  setVariant: (v: Tweaks['viewerVariant']) => void;
+  variant: Settings['viewerVariant'];
+  setVariant: (v: Settings['viewerVariant']) => void;
 };
 
 export function ViewerA(props: Props) {
-  const { story, onClose, ruby, fontSize, night } = props;
+  const { story, onClose, ruby, night } = props;
   const { pageIndex, total, flipDir, isFlipping, go } = useViewerNav(story.pages.length, onClose);
   const isCover = pageIndex === 0;
   const page = isCover ? null : story.pages[pageIndex - 1];
@@ -83,7 +82,8 @@ export function ViewerA(props: Props) {
             ) : (
               <>
                 {/* <ruby>/<rt> を常に DOM に保持し、CSS の .no-ruby rt { display:none } で表示制御 (SPEC R-005) */}
-                <div className="book-a-text" style={{ fontSize }}>
+                {/* 本文サイズは var(--font-size-body) = 26px 固定 (ADR-008) */}
+                <div className="book-a-text" style={{ fontSize: 'var(--font-size-body)' }}>
                   <RubyText text={page!.ruby} />
                 </div>
                 <div className="book-a-pageno">

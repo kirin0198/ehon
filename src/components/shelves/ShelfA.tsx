@@ -5,13 +5,13 @@ import { Header } from '../layout/Header';
 import { ShelfSwitcher } from './ShelfSwitcher';
 import { TagFilter } from './TagFilter';
 import { EmptyState } from '../common/EmptyState';
-import type { Tweaks } from '../../types/tweaks';
+import type { Settings } from '../../types/settings';
 
 type Props = {
   stories: readonly Story[];
   onOpen: (id: string) => void;
-  shelfVariant: Tweaks['shelfVariant'];
-  setShelfVariant: (v: Tweaks['shelfVariant']) => void;
+  shelfVariant: Settings['shelfVariant'];
+  setShelfVariant: (v: Settings['shelfVariant']) => void;
   selectedTags: string[];
   setSelectedTags: (tags: string[]) => void;
 };
