@@ -38,9 +38,10 @@ export function ViewerB(props: Props) {
   // - trackMouse=false: マウスドラッグでは反応しない
   // - ViewerBar には装着しない (ボタンタップとの衝突回避)
   // - isFlipping 中の go は useViewerNav 内で自動的に無視される
+  // - RTL 化 (ADR-012 / ACR-6): ViewerA との一貫性のため右スワイプ=次 / 左スワイプ=前 に反転
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => go(1),
-    onSwipedRight: () => go(-1),
+    onSwipedLeft: () => go(-1),
+    onSwipedRight: () => go(1),
     delta: 50,
     preventScrollOnSwipe: false,
     trackMouse: false,
