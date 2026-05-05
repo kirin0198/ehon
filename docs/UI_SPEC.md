@@ -4,13 +4,14 @@
 > Source: project-rules.md (2026-05-04)
 > Source: モック資産 (`Ehon.html` / `app.jsx` / `tweaks-panel.jsx` / `components/Shelves.jsx` / `components/Viewers.jsx` / `styles/ehon.css`)
 > Created: 2026-05-04
-> Last updated: 2026-05-06
+> Last updated: 2026-05-05
 > Update history:
 >   - 2026-05-04: Initial draft (ux-designer / Delivery Flow Light プラン / lightweight visual default 適用)
 >   - 2026-05-04: Tweaks パネル / ViewerBar の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントの UI 削除と固定化)
 >   - 2026-05-05: Tweaks パネル / TweaksLauncher を完全削除 (developer / SCR-003 削除、本棚/ビュアー画面の Tweaks ボタン記述を全消去)
 >   - 2026-05-06: ビュアーのタッチスワイプ Phase 1 (developer / SCR-002 Interactions の「画面半分タップ」を「左/右スワイプ」に置換、Accessibility 節に補足)
 >   - 2026-05-05: ページめくりアニメ強化 Phase 2 (developer / Animations 表に perspective / box-shadow / easing を反映)
+>   - 2026-05-05: ViewerA / ViewerB の RTL 化 (developer / SCR-002 ViewerA レイアウト記述を右綴じに、Interactions 表のスワイプ方向を反転、Animations 表のキーフレーム名を flipNextRight / flipPrevLeft / flipNextLeftFade に更新、キーボード行は変更なし)
 
 ## 1. Design Policy
 
@@ -224,7 +225,7 @@ flowchart LR
 │                                                                       │
 │   ╔═════════════╤═════════════╗                                       │
 │   ║             │             ║                                       │
-│   ║   (左:絵)   │ (右:本文)   ║                                       │
+│   ║   (右:絵)   │ (左:本文)   ║                                       │
 │   ║   illust    │ むかしむかし、 ║◀━━━━━ 56px 円形 ▶                  │
 │   ║   140px     │ あるところに… ║                                     │
 │   ║             │             ║                                       │
@@ -292,8 +293,8 @@ flowchart LR
 | Trigger | Action | Feedback |
 |---------|--------|----------|
 | 「よみはじめる」CTA タップ / Enter | `pageIndex = 1` | viewerIn / slideInRight アニメ（reduced-motion で停止） |
-| ▶ ボタン / → キー / 左スワイプ (タッチ) | `pageIndex++` (max: pages.length-1) | flipNextLeft (A) / slideInRight (B) |
-| ◀ ボタン / ← キー / 右スワイプ (タッチ) | `pageIndex--` (min: 0) | flipPrevRight (A) / slideInLeft (B) |
+| ▶ ボタン / → キー / **右スワイプ** (タッチ, 右綴じ) | `pageIndex++` (max: pages.length-1) | `flipNextRight` (A) / `slideInRight` (B) |
+| ◀ ボタン / ← キー / **左スワイプ** (タッチ, 右綴じ) | `pageIndex--` (min: 0) | `flipPrevLeft` (A) / `slideInLeft` (B) |
 | Esc キー / ✕ ボタン | `onClose()` → 本棚へ戻る | viewer フェードアウト、本棚スクロール位置保持 |
 | ふりがなトグル | `settings.ruby` トグル | `<rt>` 即時表示切替 |
 | 夜モードトグル | `settings.night` トグル | 全画面の `.night` クラス切替（昼夜パレット遷移） |
@@ -356,8 +357,8 @@ flowchart LR
 - **スマホ (≤560px)**: ロゴサブテキスト非表示、ロゴ 20px、ShelfA 背表紙幅 54px、ShelfB grid `repeat(2, 1fr)`、タグフィルタは横スクロール
 
 ### SCR-002 (ビュアー)
-- **タブレット (≤900px)**: バー padding 削減、ナビボタン 44px、ViewerA 見開きを縦積み (左 38% / 右 62%)
-- **スマホ (≤560px)**: バー高圧縮、タイトルバッジ非表示、ナビボタン 38px (opacity 0.85)、ViewerA 見開きを左 32%/右 68%、ViewerB の本文カードを画面端いっぱいに、表紙タイトル 32px
+- **タブレット (≤900px)**: バー padding 削減、ナビボタン 44px、ViewerA 見開きを縦積み (右=絵 38% / 左=文 62%)
+- **スマホ (≤560px)**: バー高圧縮、タイトルバッジ非表示、ナビボタン 38px (opacity 0.85)、ViewerA 見開きを右=絵 32%/左=文 68%、ViewerB の本文カードを画面端いっぱいに、表紙タイトル 32px
 
 ### iPad Safari `100vh` ずれ（R-004）対策
 - すべての画面で `100dvh`（フォールバック `100vh`）を採用
@@ -384,11 +385,12 @@ flowchart LR
 - 本文の `<ruby>` 構造を維持し、SR が「漢字 → 読み」の順に読み上げる挙動を VoiceOver / NVDA で検証
 - フォーカス管理: 開いた瞬間に「よみはじめる」CTA(表紙) または 次ボタン(本文)に移動。閉じた時、トリガー要素に復帰 (IR-007)
 - キーボード (←/→/Esc) とナビボタン (◀/▶) は引き続き使用可能。スワイプは追加手段であり、SR / キーボード操作の代替ではない (ADR-010)
+- RTL 化 (ADR-012): ViewerA 見開きの DOM 順序は `.book-a-page.right`（絵）→ `.book-a-page.left`（文）。右→左の reading order で WCAG 1.3.2 に準拠 (R-023)
 
 ### 共通
 - すべてのインタラクティブ要素に `:focus-visible` で 2px outline (terracotta)
 - タップ領域 ≥ 44×44px（モック CSS が一部 56×56px 採用）
-- `prefers-reduced-motion: reduce` で `flipNextLeft` / `floaty` / `slideInRight` / `viewerIn` 等を無効化
+- `prefers-reduced-motion: reduce` で `flipNextRight` / `flipPrevLeft` / `flipNextLeftFade` / `floaty` / `slideInRight` / `viewerIn` 等を無効化
 - 夜モード `--mustard` のコントラストは visual 検証フェーズで実測 → 4.5:1 未達なら代替色を導入（TBD-002 / R-001）
 
 ---
@@ -398,9 +400,9 @@ flowchart LR
 | 名前 | 適用先 | duration | easing | 中間キー | reduced-motion |
 |------|--------|----------|--------|----------|----------------|
 | `viewerIn` | ビュアー入場 | 0.35s | ease | — | 停止 (opacity 即時 1) |
-| `flipNextLeft` | ViewerA 次ページ | 0.55s | ease-in | 50%: `box-shadow: -20px 0 30px rgba(0,0,0,0.3)` (紙の厚み) | 停止 (即時切替) |
-| `flipNextRightFade` | ViewerA 次ページ右フェード | 0.55s | ease-out | 40%: `opacity: 0` (フェード開始を前倒し) | 停止 |
-| `flipPrevRight` | ViewerA 前ページ | 0.55s | ease-in | 50%: `box-shadow: 20px 0 30px rgba(0,0,0,0.3)` (紙の厚み) | 停止 |
+| `flipNextRight` | ViewerA 次ページ (右ページが左へ回転) | 0.55s | ease-in | 50%: `box-shadow: 20px 0 30px rgba(0,0,0,0.3)` (紙の厚み, 右側) | 停止 (即時切替) |
+| `flipNextLeftFade` | ViewerA 次ページ左フェード | 0.55s | ease-out | 40%: `opacity: 0` (フェード開始を前倒し) | 停止 |
+| `flipPrevLeft` | ViewerA 前ページ (左ページが右へ回転) | 0.55s | ease-in | 50%: `box-shadow: -20px 0 30px rgba(0,0,0,0.3)` (紙の厚み, 左側) | 停止 |
 | `slideInRight` | ViewerB 次ページ背景 | 0.5s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | — | 停止 |
 | `slideInRightCard` | ViewerB 次ページカード | 0.5s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | — | 停止 |
 | `slideInLeft` / `slideInLeftCard` | ViewerB 前ページ | 0.5s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | — | 停止 |
@@ -414,6 +416,10 @@ flowchart LR
 >
 > CSS は `styles/ehon.css` の `@keyframes` をそのまま `src/styles/` に移植する。
 > reduced-motion 対応は `src/styles/reduced-motion.css` で統合管理 (`@media (prefers-reduced-motion: reduce) { ... animation: none !important; }`)。
+>
+> **RTL 化 (2026-05-05 / ADR-012):** キーフレーム名を右綴じ仕様に改名。`flipNextRight`（右ページが左へ回転）/
+> `flipNextLeftFade`（左ページのフェードイン）/ `flipPrevLeft`（左ページが右へ回転）。
+> duration / easing / 中間キー位置 / 不透明度 / blur / cubic-bezier の値は Phase 2 確定値を据え置き (ACR-9)。
 
 ---
 
