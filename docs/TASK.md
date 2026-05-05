@@ -6,8 +6,8 @@
 
 ## Phase: Phase 1 — タッチスワイプ対応 (react-swipeable)
 
-Last updated: 2026-05-06 (TASK-1-5 完了)
-Status: in-progress
+Last updated: 2026-05-06 (TASK-1-6 完了 / Phase 1 全タスク完了)
+Status: completed
 
 ## Overview
 
@@ -92,7 +92,7 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
   - 依存: TASK-1-2 / TASK-1-3 (TASK-1-4 と並行可)
   - コミット粒度: `docs: SPEC.md / UI_SPEC.md にスワイプ仕様を反映 (TASK-1-5)`
 
-- [ ] TASK-1-6: 検証とバンドルサイズ計測
+- [x] TASK-1-6: 検証とバンドルサイズ計測
   - `pnpm typecheck` / `pnpm lint` / `pnpm format:check` / `pnpm test` 全 pass
   - `pnpm test:e2e` で `viewer-swipe.spec.ts` を含む主要シナリオ pass
   - `pnpm build` でバンドルサイズを計測 (raw / gzip 双方)
@@ -124,12 +124,21 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
 
 ## Recent Commits
 
-TASK-1-5 完了後:
+Phase 1 全タスク完了 (TASK-1-6):
 - (設計メモ) docs: ARCHITECTURE.md / TASK.md / page-turn-animation.md を Phase 1 スワイプ対応で更新
 - chore: react-swipeable を依存追加 (TASK-1-1)
 - feat: ViewerA/B にタッチスワイプでページ送りを実装 (TASK-1-2 / 1-3)
 - test: スワイプ E2E (viewer-swipe.spec.ts) を追加 (TASK-1-4)
 - docs: SPEC.md / UI_SPEC.md にスワイプ仕様を反映 (TASK-1-5)
+
+バンドルサイズ (TASK-1-6 計測):
+  - raw: 170.14 kB (前回 166.17 kB → +3.97 kB)
+  - gzip: 56.37 kB (前回 54.93 kB → +1.44 kB, AC-6: +15 kB 以内 ✓)
+
+E2E 状況:
+  - WSL2 の test-results/ が root 所有のため、ローカルでレポーター書込不可 (前回同様)
+  - CI での実行で全 E2E ケースを検証予定
+  - ユニットテスト全 55 件 pass
 
 ## Session Interruption Notes
 
