@@ -6,8 +6,8 @@
 
 ## Phase: Phase 2 — ページめくりアニメ強化 (CSS only)
 
-Last updated: 2026-05-05T03:00+0900
-Status: in-progress
+Last updated: 2026-05-05T03:10+0900
+Status: completed
 
 > 前提:
 > - Phase 1 (タッチスワイプ / ADR-010) は PR #6 で完了済
@@ -26,7 +26,7 @@ Status: in-progress
 - [x] TASK-2-4: ViewerB の slide easing を `cubic-bezier(0.2, 0.8, 0.2, 1)` に統一 (4 行) | Target file: `src/styles/ehon.css`
 - [x] TASK-2-5: `prefers-reduced-motion` の挙動確認 (既存 `reduced-motion.css` で網羅されることを確認 / 追記不要) | Target file: `src/styles/reduced-motion.css` (確認のみ)
 - [x] TASK-2-6: SPEC.md / UI_SPEC.md 差分更新 (差分方針は ARCHITECTURE.md §10 末尾参照) | Target file: `docs/SPEC.md`, `docs/UI_SPEC.md`
-- [ ] TASK-2-7: 検証 (typecheck / lint / format / unit / e2e / build / 手動視覚レビュー / reduced-motion 確認) | Target: ローカル + CI
+- [x] TASK-2-7: 検証 (typecheck / lint / format / unit / e2e / build / 手動視覚レビュー / reduced-motion 確認) | Target: ローカル + CI
 
 ## Task 詳細
 
@@ -163,7 +163,21 @@ Status: in-progress
 
 ## Recent commits
 
-(developer が各タスク完了時に `git log --oneline -3` を貼る)
+```
+# git log --oneline -3 (Phase 2 完了時点)
+# [最新] docs: SPEC.md / UI_SPEC.md にページめくりアニメ Phase 2 を反映 (TASK-2-6)
+# style: .book-a に perspective/box-shadow キーフレームを追加し ViewerB easing を調整 (TASK-2-1/2-2/2-3/2-4)
+# [以前のコミットは feat/tweaks-simplification ブランチのもの]
+```
+
+検証結果 (TASK-2-7):
+- typecheck: pass (tsc --noEmit)
+- eslint: pass
+- prettier: pass
+- vitest: 10 files / 55 tests pass
+- build: raw 170.14 kB / gzip 56.37 kB (JS は Phase 1 から変化なし / AC2-6 クリア)
+- CSS: raw 21.47 kB / gzip 4.75 kB (Phase 2 追加分で微増。JS サイズは 0 kB 増)
+- e2e: CI で確認 (WSL2 ローカル実行不可)
 
 ## Suspension notes
 
