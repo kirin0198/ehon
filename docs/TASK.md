@@ -1,20 +1,8 @@
 # TASK.md
 
-> Source: (次フェーズ開始時に ARCHITECTURE.md バージョンを記入)
+> Phase 1 (タッチスワイプ対応 / ADR-010) を 2026-05-06 に完了。
+> 次フェーズ開始時にこのファイルを新しいタスクリストで上書きすること。
 
-## Phase: (次フェーズ名を記入)
+## Status: completed
 
-Last updated: —
-Status: —
-
-## Task list
-
-(次フェーズ開始時に developer が ARCHITECTURE.md の実装順序から生成する)
-
-## Recent Commits
-
-(各タスク完了後に `git log --oneline -3` を記録する)
-
-## Session Interruption Notes
-
-(セッション中断時にここに状況を記録する)
+Phase 1 全 6 タスク完了。ブランチ `feat/swipe-gesture` / PR #6 を参照。

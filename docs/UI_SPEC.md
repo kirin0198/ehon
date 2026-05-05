@@ -4,11 +4,12 @@
 > Source: project-rules.md (2026-05-04)
 > Source: モック資産 (`Ehon.html` / `app.jsx` / `tweaks-panel.jsx` / `components/Shelves.jsx` / `components/Viewers.jsx` / `styles/ehon.css`)
 > Created: 2026-05-04
-> Last updated: 2026-05-05
+> Last updated: 2026-05-06
 > Update history:
 >   - 2026-05-04: Initial draft (ux-designer / Delivery Flow Light プラン / lightweight visual default 適用)
 >   - 2026-05-04: Tweaks パネル / ViewerBar の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントの UI 削除と固定化)
 >   - 2026-05-05: Tweaks パネル / TweaksLauncher を完全削除 (developer / SCR-003 削除、本棚/ビュアー画面の Tweaks ボタン記述を全消去)
+>   - 2026-05-06: ビュアーのタッチスワイプ Phase 1 (developer / SCR-002 Interactions の「画面半分タップ」を「左/右スワイプ」に置換、Accessibility 節に補足)
 
 ## 1. Design Policy
 
@@ -290,8 +291,8 @@ flowchart LR
 | Trigger | Action | Feedback |
 |---------|--------|----------|
 | 「よみはじめる」CTA タップ / Enter | `pageIndex = 1` | viewerIn / slideInRight アニメ（reduced-motion で停止） |
-| ▶ ボタン / → キー / 画面右半分タップ | `pageIndex++` (max: pages.length-1) | flipNextLeft (A) / slideInRight (B) |
-| ◀ ボタン / ← キー / 画面左半分タップ | `pageIndex--` (min: 0) | flipPrevRight (A) / slideInLeft (B) |
+| ▶ ボタン / → キー / 左スワイプ (タッチ) | `pageIndex++` (max: pages.length-1) | flipNextLeft (A) / slideInRight (B) |
+| ◀ ボタン / ← キー / 右スワイプ (タッチ) | `pageIndex--` (min: 0) | flipPrevRight (A) / slideInLeft (B) |
 | Esc キー / ✕ ボタン | `onClose()` → 本棚へ戻る | viewer フェードアウト、本棚スクロール位置保持 |
 | ふりがなトグル | `settings.ruby` トグル | `<rt>` 即時表示切替 |
 | 夜モードトグル | `settings.night` トグル | 全画面の `.night` クラス切替（昼夜パレット遷移） |
@@ -381,6 +382,7 @@ flowchart LR
 - 進捗バー: `role="progressbar"` + `aria-valuenow / valuemin / valuemax`
 - 本文の `<ruby>` 構造を維持し、SR が「漢字 → 読み」の順に読み上げる挙動を VoiceOver / NVDA で検証
 - フォーカス管理: 開いた瞬間に「よみはじめる」CTA(表紙) または 次ボタン(本文)に移動。閉じた時、トリガー要素に復帰 (IR-007)
+- キーボード (←/→/Esc) とナビボタン (◀/▶) は引き続き使用可能。スワイプは追加手段であり、SR / キーボード操作の代替ではない (ADR-010)
 
 ### 共通
 - すべてのインタラクティブ要素に `:focus-visible` で 2px outline (terracotta)
