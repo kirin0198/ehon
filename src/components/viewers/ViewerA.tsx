@@ -2,7 +2,7 @@
 // 本番固定化 (2026-05-04) により fontSize / setFontSize props を削除。
 // 本文サイズは tokens.css の --font-size-body (26px) を CSS で参照。
 import type { Story } from '../../types/story';
-import type { Tweaks } from '../../types/tweaks';
+import type { Settings } from '../../types/settings';
 import { useViewerNav } from '../../hooks/useViewerNav';
 import { ViewerBar } from './ViewerBar';
 import { CoverPage } from './CoverPage';
@@ -16,8 +16,8 @@ type Props = {
   night: boolean;
   setRuby: (v: boolean) => void;
   setNight: (v: boolean) => void;
-  variant: Tweaks['viewerVariant'];
-  setVariant: (v: Tweaks['viewerVariant']) => void;
+  variant: Settings['viewerVariant'];
+  setVariant: (v: Settings['viewerVariant']) => void;
 };
 
 export function ViewerA(props: Props) {

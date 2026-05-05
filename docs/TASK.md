@@ -6,7 +6,7 @@
 
 ## Phase: Tweaks 機能の完全削除 (Phase 1〜5)
 
-Last updated: 2026-05-05T01:00:00
+Last updated: 2026-05-05T02:00:00
 Status: in-progress
 Branch: feat/tweaks-simplification (PR #3 継続使用 / ユーザー判断)
 
@@ -18,10 +18,10 @@ Branch: feat/tweaks-simplification (PR #3 継続使用 / ユーザー判断)
 - [x] TASK-1-3: `tests/unit/settings-store.test.ts` を新規作成 (lazy init / setSetting / reset / 永続化 / whitelist 抽出) | Target: tests/unit/settings-store.test.ts
 
 ### Phase 2: 参照側を入れ替え (App / Shelf* / Viewer*)
-- [ ] TASK-2-1: `src/App.tsx` 改修 (TweaksProvider 削除 / useTweaks → useSettingsStore / tweaksOpen state 削除 / TweaksLauncher・TweaksPanel 削除) | Target: src/App.tsx
-- [ ] TASK-2-2: Shelf 系の型 import を `Tweaks` → `Settings` に置換 | Target: src/components/shelves/ShelfA.tsx, ShelfB.tsx, ShelfSwitcher.tsx
-- [ ] TASK-2-3: Viewer 系の型 import を `Tweaks` → `Settings` に置換 | Target: src/components/viewers/ViewerA.tsx, ViewerB.tsx, ViewerBar.tsx
-- [ ] TASK-2-4: `tests/unit/App.smoke.test.tsx` を TweaksProvider 不要前提に修正 | Target: tests/unit/App.smoke.test.tsx
+- [x] TASK-2-1: `src/App.tsx` 改修 (TweaksProvider 削除 / useTweaks → useSettingsStore / tweaksOpen state 削除 / TweaksLauncher・TweaksPanel 削除) | Target: src/App.tsx
+- [x] TASK-2-2: Shelf 系の型 import を `Tweaks` → `Settings` に置換 | Target: src/components/shelves/ShelfA.tsx, ShelfB.tsx, ShelfSwitcher.tsx
+- [x] TASK-2-3: Viewer 系の型 import を `Tweaks` → `Settings` に置換 | Target: src/components/viewers/ViewerA.tsx, ViewerB.tsx, ViewerBar.tsx
+- [x] TASK-2-4: `tests/unit/App.smoke.test.tsx` を TweaksProvider 不要前提に修正 | Target: tests/unit/App.smoke.test.tsx
 
 ### Phase 3: 旧 Tweaks 関連コード削除
 - [ ] TASK-3-1: `src/components/tweaks/` ディレクトリ全体を git rm (5 ファイル + ディレクトリ) | Target: src/components/tweaks/

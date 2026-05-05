@@ -2,7 +2,7 @@
 // 本番固定化 (2026-05-04) により「あ-」「あ+」ボタンと文字サイズ数値表示を削除。
 // fontSize / setFontSize props も削除。
 import type { Story } from '../../types/story';
-import type { Tweaks } from '../../types/tweaks';
+import type { Settings } from '../../types/settings';
 
 type Props = {
   story: Story;
@@ -11,8 +11,8 @@ type Props = {
   night: boolean;
   setRuby: (v: boolean) => void;
   setNight: (v: boolean) => void;
-  variant: Tweaks['viewerVariant'];
-  setVariant: (v: Tweaks['viewerVariant']) => void;
+  variant: Settings['viewerVariant'];
+  setVariant: (v: Settings['viewerVariant']) => void;
 };
 
 export function ViewerBar({

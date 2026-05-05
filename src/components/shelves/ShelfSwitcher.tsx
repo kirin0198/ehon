@@ -1,9 +1,9 @@
 // 本棚バリアント (A=立てかけ / B=表紙ならべ) 切替ピル。
-import type { Tweaks } from '../../types/tweaks';
+import type { Settings } from '../../types/settings';
 
 type Props = {
-  value: Tweaks['shelfVariant'];
-  onChange: (v: Tweaks['shelfVariant']) => void;
+  value: Settings['shelfVariant'];
+  onChange: (v: Settings['shelfVariant']) => void;
 };
 
 export function ShelfSwitcher({ value, onChange }: Props) {
