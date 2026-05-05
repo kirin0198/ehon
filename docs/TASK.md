@@ -6,8 +6,8 @@
 
 ## Phase: RTL 化 — ViewerA / ViewerB を右綴じ書籍仕様に変更
 
-Last updated: 2026-05-05T10:00+0900
-Status: in-progress
+Last updated: 2026-05-05T11:00+0900
+Status: complete
 
 > 前提:
 > - Phase 2 (ページめくりアニメ強化 / ADR-011) は PR #9 で main にマージ済
@@ -41,7 +41,7 @@ Status: in-progress
 - [x] TASK-3-5: viewer-swipe.spec.ts の期待値を反転（左=前 / 右=次） | Target file: `tests/e2e/viewer-swipe.spec.ts`
 - [x] TASK-3-6: viewer-keyboard.spec.ts の **据え置き確認**（修正不要 / OS 標準維持の検証） | Target file: `tests/e2e/viewer-keyboard.spec.ts`
 - [x] TASK-3-7: SPEC.md / UI_SPEC.md 差分更新（差分方針は ARCHITECTURE.md §10 末尾参照） | Target file: `docs/SPEC.md`, `docs/UI_SPEC.md`
-- [ ] TASK-3-8: 検証（typecheck / lint / format / unit / e2e / build / 手動視覚レビュー / reduced-motion 確認） | Target: ローカル + CI
+- [x] TASK-3-8: 検証（typecheck / lint / format / unit / e2e / build / 手動視覚レビュー / reduced-motion 確認） | Target: ローカル + CI
 
 ## Task 詳細
 
@@ -223,10 +223,12 @@ Status: in-progress
 ## Recent commits
 
 ```
-# git log --oneline -3 (現状 / 着手前)
-57e5d80 fix(test): persistence E2E のレース解消 — addInitScript で legacy localStorage を仕込む (TASK-Fix1)
-9f09a34 docs: TASK.md / SPEC.md / ARCHITECTURE.md / UI_SPEC.md / design-notes 更新
-9403688 feat: index.html から不要フォント <link> を削除し M PLUS Rounded 1c のみ残す (TASK-E1)
+# git log --oneline -5 (完了後)
+feat: ViewerA を右綴じ仕様に変更 (JSX 左右入替 + スワイプ反転 / TASK-3-1 / 3-2)
+feat: ViewerB のスワイプを RTL に同期反転 (TASK-3-3)
+style: ehon.css のめくりキーフレームを RTL 仕様に改名 + 反転 (TASK-3-4)
+test(e2e): viewer-swipe.spec.ts の期待値を RTL 仕様に反転 (TASK-3-5)
+docs: SPEC.md / UI_SPEC.md を RTL 仕様に追従 (TASK-3-7)
 ```
 
 ## Suspension notes
