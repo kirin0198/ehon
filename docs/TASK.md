@@ -6,7 +6,7 @@
 
 ## Phase: Phase 1 — タッチスワイプ対応 (react-swipeable)
 
-Last updated: 2026-05-06 (TASK-1-4 完了)
+Last updated: 2026-05-06 (TASK-1-5 完了)
 Status: in-progress
 
 ## Overview
@@ -73,7 +73,7 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
   - 依存: TASK-1-2 / TASK-1-3
   - コミット粒度: `test: スワイプ E2E (viewer-swipe.spec.ts) を追加 (TASK-1-4)`
 
-- [ ] TASK-1-5: ドキュメント更新 | Target file: `docs/SPEC.md` / `docs/UI_SPEC.md`
+- [x] TASK-1-5: ドキュメント更新 | Target file: `docs/SPEC.md` / `docs/UI_SPEC.md`
   - **SPEC.md**:
     - Update history に `2026-05-06: タッチスワイプ Phase 1 (developer / UC-006 にスワイプ操作追加 / 受入基準追記)` を追記
     - Section 1. Scope (IN) の「ページ送り（ボタン / キーボード ←/→ / タップ）」を「タッチスワイプ」に修正
@@ -124,11 +124,12 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
 
 ## Recent Commits
 
-TASK-1-4 完了後:
+TASK-1-5 完了後:
 - (設計メモ) docs: ARCHITECTURE.md / TASK.md / page-turn-animation.md を Phase 1 スワイプ対応で更新
 - chore: react-swipeable を依存追加 (TASK-1-1)
 - feat: ViewerA/B にタッチスワイプでページ送りを実装 (TASK-1-2 / 1-3)
 - test: スワイプ E2E (viewer-swipe.spec.ts) を追加 (TASK-1-4)
+- docs: SPEC.md / UI_SPEC.md にスワイプ仕様を反映 (TASK-1-5)
 
 ## Session Interruption Notes
 
