@@ -6,7 +6,7 @@
 
 ## Phase: Tweaks 機能の完全削除 (Phase 1〜5)
 
-Last updated: 2026-05-05T03:00:00
+Last updated: 2026-05-05T04:00:00
 Status: in-progress
 Branch: feat/tweaks-simplification (PR #3 継続使用 / ユーザー判断)
 
@@ -30,10 +30,11 @@ Branch: feat/tweaks-simplification (PR #3 継続使用 / ユーザー判断)
 - [x] TASK-3-4: `tests/unit/tweaks-context.test.tsx` / `tweaks-reducer.test.ts` / `TweaksPanel.test.tsx` を git rm | Target: tests/unit/
 
 ### Phase 4: E2E + ドキュメント更新
-- [ ] TASK-4-1: `tests/e2e/persistence.spec.ts` を新キー `eh.settings` ベースに書き換え + 旧 `eh.tweaks` 残存ケース 1 本は維持 | Target: tests/e2e/persistence.spec.ts
-- [ ] TASK-4-2: `docs/SPEC.md` 更新 (詳細は ARCHITECTURE.md §10「SPEC.md 差分更新方針」参照) | Target: docs/SPEC.md
-- [ ] TASK-4-3: `docs/UI_SPEC.md` 更新 (詳細は ARCHITECTURE.md §10「UI_SPEC.md 差分更新方針」参照) | Target: docs/UI_SPEC.md
-- [ ] TASK-4-4: `pnpm build` でバンドルサイズを計測し PR 説明用に raw / gzip 双方を控える | Target: (build artifact only)
+- [x] TASK-4-1: `tests/e2e/persistence.spec.ts` を新キー `eh.settings` ベースに書き換え + 旧 `eh.tweaks` 残存ケース 1 本は維持 | Target: tests/e2e/persistence.spec.ts
+- [x] TASK-4-2: `docs/SPEC.md` 更新 (詳細は ARCHITECTURE.md §10「SPEC.md 差分更新方針」参照) | Target: docs/SPEC.md
+- [x] TASK-4-3: `docs/UI_SPEC.md` 更新 (詳細は ARCHITECTURE.md §10「UI_SPEC.md 差分更新方針」参照) | Target: docs/UI_SPEC.md
+- [x] TASK-4-4: `pnpm build` でバンドルサイズを計測し PR 説明用に raw / gzip 双方を控える | Target: (build artifact only)
+  - JS: 166.17 kB (raw) / 54.93 kB (gzip) ← 旧値 170.51 kB / 56.08 kB から削減
 
 ### Phase 5: 仕上げ
 - [ ] TASK-5-1: `pnpm typecheck` / `pnpm lint` / `pnpm format:check` / `pnpm test` 全 pass 確認 | Target: (verification only)

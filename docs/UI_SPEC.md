@@ -4,10 +4,11 @@
 > Source: project-rules.md (2026-05-04)
 > Source: モック資産 (`Ehon.html` / `app.jsx` / `tweaks-panel.jsx` / `components/Shelves.jsx` / `components/Viewers.jsx` / `styles/ehon.css`)
 > Created: 2026-05-04
-> Last updated: 2026-05-04
+> Last updated: 2026-05-05
 > Update history:
 >   - 2026-05-04: Initial draft (ux-designer / Delivery Flow Light プラン / lightweight visual default 適用)
 >   - 2026-05-04: Tweaks パネル / ViewerBar の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントの UI 削除と固定化)
+>   - 2026-05-05: Tweaks パネル / TweaksLauncher を完全削除 (developer / SCR-003 削除、本棚/ビュアー画面の Tweaks ボタン記述を全消去)
 
 ## 1. Design Policy
 
@@ -85,15 +86,11 @@
 flowchart LR
   Home[SCR-001 本棚<br/>ShelfA or ShelfB] -->|表紙クリック / Enter / タップ| Viewer[SCR-002 ビュアー<br/>ViewerA or ViewerB]
   Viewer -->|Esc / × / 外側クリック| Home
-  Home -->|Tweaks ボタン| Tweaks[SCR-003 Tweaks パネル<br/>右下 sticky overlay]
-  Viewer -->|Tweaks ボタン| Tweaks
-  Tweaks -->|閉じる| Home
-  Tweaks -->|閉じる| Viewer
   Home -.->|タグフィルター内変化のみ| Home
   Viewer -.->|ページ送り内変化のみ| Viewer
 ```
 
-> 物理スクリーンは 2 つ (Home / Viewer)、論理オーバーレイは 1 つ (Tweaks Panel)。
+> 物理スクリーンは 2 つ (Home / Viewer)。Tweaks パネルは廃止済 (2026-05-05 / ADR-009)。
 > ページ送りは Viewer 内の状態変化のため SCR を分けない。
 > URL ルーティングは存在しない（FR-020 / UC-019 が Could 採用なら `?shelf=B&viewer=A&open={id}` のクエリパラメータのみ）。
 
@@ -105,7 +102,7 @@ flowchart LR
 |----------|------------|------------------|----------|------------|
 | SCR-001 | 本棚（Home） | UC-001 〜 UC-004, UC-016, UC-017 | `/` (オプション: `?shelf=A\|B&tag=...`) | 物語一覧。ShelfA / ShelfB バリアント切替、タグフィルター |
 | SCR-002 | ビュアー（Viewer） | UC-005 〜 UC-011, UC-016, UC-017, UC-018 | `/` （Home オーバーレイ） | 物語を読む画面。ViewerA / ViewerB バリアント切替、表紙ページ + 本文ページ |
-| SCR-003 | Tweaks パネル | UC-009 〜 UC-014, UC-015 | （オーバーレイ） | 設定一括操作。Home / Viewer どちらからも開ける |
+| ~~SCR-003~~ | ~~Tweaks パネル~~ | ~~UC-014~~ | — | (削除: 2026-05-05 / ADR-009) Tweaks パネルは廃止。等価操作は ShelfSwitcher / ViewerBar で提供 |
 
 ---
 
@@ -141,7 +138,6 @@ flowchart LR
 │ ║                            (床板)                                ║ │
 │ ╚═══════════════════════════════════════════════════════════════════╝ │
 └───────────────────────────────────────────────────────────────────────┘
-                                          [Tweaks 設定 ⚙ ]  ← 右下 sticky
 ```
 
 #### Layout Structure (ShelfB: 表紙ならべ)
@@ -168,7 +164,6 @@ flowchart LR
 │  │グリム童話│ │日本昔話 │                                             │
 │  └─────────┘ └─────────┘                                             │
 └───────────────────────────────────────────────────────────────────────┘
-                                          [Tweaks 設定 ⚙ ]  ← 右下 sticky
 ```
 
 #### Component Details
@@ -183,7 +178,6 @@ flowchart LR
 | 6 | `<ShelfB>` グリッド | composite | n/a | `auto-fill, minmax(220px, 1fr)` 列、gap 28px |
 | 7 | `<CoverCard>` (ShelfB 内) | clickable card | default / hover (translateY -6px) / focus | 3:4 縦長カバー + 著者バッジ + 中央絵文字 + 表題。下にメタ（タイトル + description + ミニタグ） |
 | 8 | `<EmptyState>` | message | shown when filtered.length === 0 | 「🔍 このタグの えほんは まだないよ」 |
-| 9 | `<TweaksLauncher>` | floating button | default / hover | 右下 sticky の ⚙ ボタン。クリックで Tweaks パネル展開 |
 
 #### Interactions
 
@@ -191,9 +185,8 @@ flowchart LR
 |---------|--------|----------|
 | 表紙(背表紙)クリック / タップ / Enter | `onOpen(story.id)` → `<Viewer>` をオーバーレイ表示 | viewerIn 0.35s ease（reduced-motion で停止） |
 | 表紙にフォーカス（Tab） | `outline: 2px solid var(--terracotta); outline-offset: 2px` | フォーカス後 Enter で開く |
-| ShelfSwitcher 切替 | `tweaks.shelfVariant` 更新 + localStorage 反映 | アクティブピル背景反転 (墨 → 紙)、即時レイアウト切替 |
+| ShelfSwitcher 切替 | `settings.shelfVariant` 更新 + localStorage 反映 | アクティブピル背景反転 (墨 → 紙)、即時レイアウト切替 |
 | タグチップ選択 | `selectedTags = [tagName]` (単一)、"" は空配列 | チップ active 反転 (terracotta 背景 + 白文字) |
-| TweaksLauncher | パネル開閉 | パネル右からスライドイン |
 | ホバー (PC) | カードリフトアニメーション | `@media (hover: none)` で抑制 |
 
 #### State Patterns
@@ -202,7 +195,7 @@ flowchart LR
 |-------|------|------|
 | Default | `filteredStories.length > 0` | ShelfA: 並んだ背表紙、ShelfB: 表紙グリッド |
 | Empty | `filteredStories.length === 0` | EmptyState メッセージ |
-| Night | `tweaks.night === true` | `.night` クラス付与、palette を夜パレットに切替 |
+| Night | `settings.night === true` | `.night` クラス付与、palette を夜パレットに切替 |
 | Loading | （MVP では不要 / 全静的） | — |
 | Error | （MVP では不要 / Error Boundary は IR-008 で別系統） | — |
 
@@ -212,7 +205,7 @@ flowchart LR
 
 **Purpose:** 選択された物語を表紙 → 本文の順で読み進める
 **Corresponding UC:** UC-005 〜 UC-011, UC-016, UC-017, UC-018
-**Transitions:** ← 本棚 (SCR-001) / → Tweaks (SCR-003)
+**Transitions:** ← 本棚 (SCR-001)
 **URL path:** `/`（Home オーバーレイ。オプション: `?open={storyId}&page={N}` を Could で許容）
 
 #### Layout Structure (ViewerA: 見開き)
@@ -237,7 +230,6 @@ flowchart LR
 │   ╚═════════════╧═════════════╝                                       │
 │                       page 3 / 8                                      │
 └───────────────────────────────────────────────────────────────────────┘
-                                          [Tweaks 設定 ⚙ ]
 ```
 
 #### Layout Structure (ViewerB: 全画面背景)
@@ -301,9 +293,9 @@ flowchart LR
 | ▶ ボタン / → キー / 画面右半分タップ | `pageIndex++` (max: pages.length-1) | flipNextLeft (A) / slideInRight (B) |
 | ◀ ボタン / ← キー / 画面左半分タップ | `pageIndex--` (min: 0) | flipPrevRight (A) / slideInLeft (B) |
 | Esc キー / ✕ ボタン | `onClose()` → 本棚へ戻る | viewer フェードアウト、本棚スクロール位置保持 |
-| ふりがなトグル | `tweaks.ruby` トグル | `<rt>` 即時表示切替 |
-| 夜モードトグル | `tweaks.night` トグル | 全画面の `.night` クラス切替（昼夜パレット遷移） |
-| ViewerSwitcher A|B | `tweaks.viewerVariant` 切替 | レイアウト即時切替（pageIndex 保持） |
+| ふりがなトグル | `settings.ruby` トグル | `<rt>` 即時表示切替 |
+| 夜モードトグル | `settings.night` トグル | 全画面の `.night` クラス切替（昼夜パレット遷移） |
+| ViewerSwitcher A|B | `settings.viewerVariant` 切替 | レイアウト即時切替（pageIndex 保持） |
 | ビュアー入場時 | フォーカスを `<NavButton.next>` または「よみはじめる」CTA に移動 | キーボードユーザビリティ (IR-007) |
 | ビュアー離脱時 | フォーカスを直前にクリックされた表紙要素へ復帰 | 同上 |
 
@@ -319,72 +311,19 @@ flowchart LR
 | Reading | `0 < pageIndex < pages.length-1` | 通常ページ表示、両ナビ有効 |
 | Last page | `pageIndex === pages.length-1` | → ボタン disabled、最終ページ表示 |
 | Image fallback | 画像取得失敗 | `<IllustWithFallback>` が `placeholderEmoji` + `bg` 色面に切替（UC-018） |
-| Night | `tweaks.night === true` | 夜パレットに切替 |
+| Night | `settings.night === true` | 夜パレットに切替 |
 | Reduced motion | `prefers-reduced-motion: reduce` | 全アニメーションを停止 / 短縮 |
 | Viewer transition | バリアント切替直後 | レイアウトのみ切替、ページは保持 |
 
 ---
 
-### SCR-003: Tweaks パネル
+### SCR-003: (削除: Tweaks パネル / 2026-05-05)
 
-> Updated: 2026-05-04 — 「色」「フォント」セクションを削除、「よみやすさ」から
-> 文字サイズスライダーを削除。操作対象は 4 項目に縮小。
-
-**Purpose:** 本棚 / ビュアー / ふりがな / 夜モードの 4 項目をパネルから一括操作する
-**Corresponding UC:** UC-009, UC-011, UC-014, UC-015
-**Transitions:** Home / Viewer 上のオーバーレイ
-**URL path:** （オーバーレイ）
-
-#### Layout Structure
-
-```
-                                              ┌─────────────────────┐
-                                              │ Tweaks         ×    │
-                                              ├─────────────────────┤
-                                              │ レイアウト           │
-                                              │  本棚    ◉ A  ○ B   │
-                                              │  ビュアー ◉ A  ○ B  │
-                                              ├─────────────────────┤
-                                              │ よみやすさ           │
-                                              │  ふりがな (ルビ) [ON]│
-                                              │  夜モード        [○]│
-                                              └─────────────────────┘
-                                              （右下 sticky / 折畳可能）
-```
-
-> 削除済み (2026-05-04): 「もじサイズ」スライダー / 「色」セクション (アクセント) /
-> 「フォント」セクション。これらは本番運用で固定値となる
-> (文字サイズ 26px / アクセント `#E07856` テラコッタ / フォント `M PLUS Rounded 1c`)。
-
-#### Component Details
-
-| # | Component | Type | State | 説明 |
-|---|-----------|------|-------|------|
-| 1 | `<TweakSection>` | grouping | static | カテゴリ見出し + 子要素を縦積み |
-| 2 | `<TweakRadio>` | radio segment | selected / not | 「本棚 A/B」「ビュアー A/B」用 |
-| 3 | `<TweakToggle>` | switch | on / off | 「ふりがな」「夜モード」用、`role="switch"` + `aria-checked` |
-| 4 | パネルクローズ | button | static | × ボタン（44×44px） |
-
-> 削除済みコンポーネント (2026-05-04): `<TweakSlider>` (文字サイズ) / `<TweakColor>` (アクセント) /
-> `<TweakSelect>` (フォント)。対応するソースファイル (`src/components/tweaks/TweakSlider.tsx`,
-> `TweakColor.tsx`, `TweakSelect.tsx`) も削除する。
-
-#### Interactions
-
-| Trigger | Action | Feedback |
-|---------|--------|----------|
-| 各設定の操作 | 該当 `tweaks.{key}` を即更新 → localStorage 永続化 | UI 即時反映、サブミットボタンなし |
-| × ボタン / 外側クリック | パネル閉じ | スライドアウト |
-| Esc キー | パネル閉じ | スライドアウト |
-
-#### State Patterns
-
-| State | 条件 | 表示 |
-|-------|------|------|
-| Closed | 既定 | 右下 ⚙ ボタンのみ表示 |
-| Open | ⚙ クリック後 | フローティングパネル表示 |
-| Persistence error | localStorage 書込失敗 | サイレント無視 + `console.warn`（IR-002 / R-003） |
-| Night | `tweaks.night === true` | パネル背景を夜パレット適用 |
+> Updated: 2026-05-05 (Tweaks 機能の完全削除 / ADR-009)
+>
+> TweaksPanel / TweaksLauncher は本実装から完全に削除した。
+> 等価操作は ShelfSwitcher (本棚バリアント) および ViewerBar (ビュアーバリアント / ふりがな / 夜モード) で提供済み。
+> 経緯と方針は `docs/design-notes/remove-tweaks-panel.md` を参照。
 
 ---
 
@@ -398,8 +337,6 @@ flowchart LR
 | `<TagFilter>` | タグ単一選択 | `tags`, `selected`, `setSelected`, `variant`, `night` |
 | `<RubyText>` | ルビ記法を `<ruby>` に変換 | `text` (`漢字{かんじ}`形式) |
 | `<IllustWithFallback>` | 挿絵 + フォールバック | `storyId`, `scene`, `placeholderEmoji`, `bgColor`, `eager?` |
-| `<TweaksLauncher>` | 右下 ⚙ フローティングボタン | `onClick`, `night` |
-| `<TweaksPanel>` | 設定パネル本体 | `open`, `onClose`, children (`TweakSection`...) |
 | `<EhButton>` | 共通ボタン (`.eh-btn`, `.eh-btn.ghost`, `.eh-btn.icon-btn`) | `variant`, `onClick`, `aria-label` |
 | `<EmptyState>` | 空タグ時メッセージ | `message` |
 | `<ProgressBar>` | ビュアー進捗バー | `value` (0〜1) |
@@ -419,10 +356,6 @@ flowchart LR
 ### SCR-002 (ビュアー)
 - **タブレット (≤900px)**: バー padding 削減、ナビボタン 44px、ViewerA 見開きを縦積み (左 38% / 右 62%)
 - **スマホ (≤560px)**: バー高圧縮、タイトルバッジ非表示、ナビボタン 38px (opacity 0.85)、ViewerA 見開きを左 32%/右 68%、ViewerB の本文カードを画面端いっぱいに、表紙タイトル 32px
-
-### SCR-003 (Tweaks)
-- **タブレット**: パネル幅 max 320px、右下から下端から 16px、コンテンツスクロール
-- **スマホ**: パネルをフルスクリーンモーダルに変換（重要：右下 sticky だと小画面で本文を覆う）
 
 ### iPad Safari `100vh` ずれ（R-004）対策
 - すべての画面で `100dvh`（フォールバック `100vh`）を採用
@@ -448,11 +381,6 @@ flowchart LR
 - 進捗バー: `role="progressbar"` + `aria-valuenow / valuemin / valuemax`
 - 本文の `<ruby>` 構造を維持し、SR が「漢字 → 読み」の順に読み上げる挙動を VoiceOver / NVDA で検証
 - フォーカス管理: 開いた瞬間に「よみはじめる」CTA(表紙) または 次ボタン(本文)に移動。閉じた時、トリガー要素に復帰 (IR-007)
-
-### SCR-003 (Tweaks)
-- パネルに `role="dialog"` + `aria-labelledby="tweaks-title"`
-- 各操作要素に明示的な `<label>` または `aria-labelledby`
-- (2026-05-04 更新: 文字サイズスライダーは廃止。残存操作はラジオ + トグルのみ)
 
 ### 共通
 - すべてのインタラクティブ要素に `:focus-visible` で 2px outline (terracotta)
