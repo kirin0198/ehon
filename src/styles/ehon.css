@@ -623,14 +623,15 @@ select:focus-visible {
   position: relative;
   overflow: hidden;
 }
-.book-a-page.left {
+/* RTL 化 (ADR-012): right=絵ページ / left=文ページ に変更 */
+.book-a-page.right {
   background: var(--paper);
 }
-.book-a-page.right {
+.book-a-page.left {
   background: var(--paper);
   display: flex;
   flex-direction: column;
-  padding: 60px 60px 60px 50px;
+  padding: 60px 50px 60px 60px;
   justify-content: center;
 }
 .eh-viewer.night .book-a-page.left,
@@ -1186,10 +1187,11 @@ select:focus-visible {
   .book-a::before {
     display: none;
   }
-  .book-a-page.left {
+  /* RTL 化: right=絵ページが上部 38%、left=文ページが下部 62% */
+  .book-a-page.right {
     flex: 0 0 38%;
   }
-  .book-a-page.right {
+  .book-a-page.left {
     flex: 1 1 62%;
     padding: 24px 22px;
     overflow-y: auto;
@@ -1348,10 +1350,11 @@ select:focus-visible {
   .book-a {
     border-radius: 0;
   }
-  .book-a-page.left {
+  /* RTL 化: right=絵ページ / left=文ページ */
+  .book-a-page.right {
     flex: 0 0 32%;
   }
-  .book-a-page.right {
+  .book-a-page.left {
     padding: 18px 18px 24px;
   }
   .book-a-text {

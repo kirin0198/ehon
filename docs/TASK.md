@@ -6,7 +6,7 @@
 
 ## Phase: RTL 化 — ViewerA / ViewerB を右綴じ書籍仕様に変更
 
-Last updated: 2026-05-05T00:00+0900
+Last updated: 2026-05-05T10:00+0900
 Status: in-progress
 
 > 前提:
@@ -34,8 +34,8 @@ Status: in-progress
 
 ### RTL Phase
 
-- [ ] TASK-3-1: ViewerA.tsx の JSX で左右ページ表示順を入れ替え（`right` を先、`left` を後）+ 単独ページの右側固定 | Target file: `src/components/viewers/ViewerA.tsx`
-- [ ] TASK-3-2: ViewerA.tsx のスワイプハンドラ (`onSwipedLeft` / `onSwipedRight`) を反転 | Target file: `src/components/viewers/ViewerA.tsx`
+- [x] TASK-3-1: ViewerA.tsx の JSX で左右ページ表示順を入れ替え（`right` を先、`left` を後）+ 単独ページの右側固定 | Target file: `src/components/viewers/ViewerA.tsx`
+- [x] TASK-3-2: ViewerA.tsx のスワイプハンドラ (`onSwipedLeft` / `onSwipedRight`) を反転 | Target file: `src/components/viewers/ViewerA.tsx`
 - [ ] TASK-3-3: ViewerB.tsx のスワイプハンドラを反転（操作の一貫性 / ACR-6） | Target file: `src/components/viewers/ViewerB.tsx`
 - [ ] TASK-3-4: ehon.css のキーフレームを改名 + 回転 / 影方向反転（`flipNextLeft` → `flipNextRight` / `flipPrevRight` → `flipPrevLeft` / `flipNextRightFade` → `flipNextLeftFade`） | Target file: `src/styles/ehon.css`
 - [ ] TASK-3-5: viewer-swipe.spec.ts の期待値を反転（左=前 / 右=次） | Target file: `tests/e2e/viewer-swipe.spec.ts`

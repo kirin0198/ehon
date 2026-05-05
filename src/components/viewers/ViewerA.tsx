@@ -1,7 +1,8 @@
-// ビュアーバリアント A: 見開き (左ページ=絵 / 右ページ=文)
+// ビュアーバリアント A: 見開き (右ページ=絵 / 左ページ=文) — 右綴じ書籍仕様 (ADR-012)
 // 本番固定化 (2026-05-04) により fontSize / setFontSize props を削除。
 // 本文サイズは tokens.css の --font-size-body (26px) を CSS で参照。
 // Phase 1 (2026-05-06): .eh-viewer-stage 相当にスワイプジェスチャを追加 (ADR-010)
+// Phase 3 (RTL): JSX 順序を right → left に変更し SR の reading order を「右→左」へ整える (R-023)
 import { useSwipeable } from 'react-swipeable';
 import type { Story } from '../../types/story';
 import type { Settings } from '../../types/settings';
@@ -34,9 +35,10 @@ export function ViewerA(props: Props) {
   // - trackMouse=false: マウスドラッグでは反応しない
   // - ViewerBar には装着しない (ボタンタップとの衝突回避)
   // - isFlipping 中の go は useViewerNav 内で自動的に無視される
+  // - RTL 化 (ADR-012): 右綴じ書籍として右スワイプ=次 / 左スワイプ=前 に反転 (ACR-2)
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => go(1),
-    onSwipedRight: () => go(-1),
+    onSwipedLeft: () => go(-1),
+    onSwipedRight: () => go(1),
     delta: 50,
     preventScrollOnSwipe: false,
     trackMouse: false,
@@ -73,8 +75,10 @@ export function ViewerA(props: Props) {
         >
           ◀
         </button>
+        {/* RTL 化 (ADR-012 / R-023): right を先・left を後の順で出力し SR reading order を右→左に整える */}
         <div className={`book-a ${flipDir ? 'flipping-' + flipDir : ''}`}>
-          <div className="book-a-page left">
+          {/* 右ページ: 現在ページの絵 (表紙の場合は CoverPage / 単独ページは右側固定 / ACR-1) */}
+          <div className="book-a-page right">
             <div
               className="book-a-illust"
               style={{
@@ -92,11 +96,11 @@ export function ViewerA(props: Props) {
                 alt={isCover ? `${story.title} の表紙` : `${story.title}: ${page!.scene}`}
               />
             </div>
+            {isCover && <CoverPage story={story} onStart={() => go(1)} />}
           </div>
-          <div className="book-a-page right">
-            {isCover ? (
-              <CoverPage story={story} onStart={() => go(1)} />
-            ) : (
+          {/* 左ページ: 現在ページの文 (表紙は空 div / レイアウト崩れ防止 / ACR-1) */}
+          <div className="book-a-page left">
+            {!isCover && (
               <>
                 {/* <ruby>/<rt> を常に DOM に保持し、CSS の .no-ruby rt { display:none } で表示制御 (SPEC R-005) */}
                 {/* 本文サイズは var(--font-size-body) = 26px 固定 (ADR-008) */}
