@@ -666,47 +666,28 @@ select:focus-visible {
   margin-top: 24px;
 }
 
-/* ページめくり (案A) */
-.book-a.flipping-next .book-a-page.left {
-  transform-origin: right center;
-  animation: flipNextLeft 0.55s ease-in;
-}
+/* ページめくり (案A) — 右綴じ仕様 (ADR-012 / ACR-3)
+ * 「次ページ」: 右ページ (.right) が左へ向かって回転して消え、左ページ (.left) がフェードイン
+ * 「前ページ」: 左ページ (.left) が右へ向かって回転して消え、右ページ (.right) が現れる
+ */
 .book-a.flipping-next .book-a-page.right {
-  animation: flipNextRightFade 0.55s ease-out;
-}
-.book-a.flipping-prev .book-a-page.right {
+  /* 右ページが中央線 (左端) を軸に左方向へ回転して消える */
   transform-origin: left center;
-  animation: flipPrevRight 0.55s ease-in;
+  animation: flipNextRight 0.55s ease-in;
 }
-@keyframes flipNextLeft {
-  0% {
-    transform: rotateY(0);
-    box-shadow: none;
-  }
-  /* Phase 2: 中間キーでページの厚みを影として表現 (AC2-1) */
-  50% {
-    transform: rotateY(-90deg);
-    box-shadow: -20px 0 30px rgba(0, 0, 0, 0.3);
-  }
-  100% {
-    transform: rotateY(-180deg);
-    opacity: 0.7;
-    box-shadow: none;
-  }
+.book-a.flipping-next .book-a-page.left {
+  /* 左ページ (新コンテンツ) がフェードイン */
+  animation: flipNextLeftFade 0.55s ease-out;
 }
-@keyframes flipNextRightFade {
-  0% {
-    opacity: 0;
-  }
-  /* Phase 2: 新ページの立ち上がりを 60% → 40% に前倒し (AC2-1 補強) */
-  40% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+.book-a.flipping-prev .book-a-page.left {
+  /* 左ページが中央線 (右端) を軸に右方向へ回転して消える */
+  transform-origin: right center;
+  animation: flipPrevLeft 0.55s ease-in;
 }
-@keyframes flipPrevRight {
+
+/* 「次ページ」: 右ページが起き上がり左方向へ倒れる (ACR-3)
+ * box-shadow の +20px 方向 = 紙の右側に厚みの影 */
+@keyframes flipNextRight {
   0% {
     transform: rotateY(0);
     box-shadow: none;
@@ -718,6 +699,39 @@ select:focus-visible {
   }
   100% {
     transform: rotateY(180deg);
+    opacity: 0.7;
+    box-shadow: none;
+  }
+}
+
+/* 「次ページ」: 左ページ (新コンテンツ) のフェードイン */
+@keyframes flipNextLeftFade {
+  0% {
+    opacity: 0;
+  }
+  /* Phase 2: 新ページの立ち上がりを 60% → 40% に前倒し (AC2-1 補強) */
+  40% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 「前ページ」: 左ページが起き上がり右方向へ倒れる
+ * box-shadow の -20px 方向 = 紙の左側に厚みの影 */
+@keyframes flipPrevLeft {
+  0% {
+    transform: rotateY(0);
+    box-shadow: none;
+  }
+  /* Phase 2: 中間キーでページの厚みを影として表現 (AC2-1) */
+  50% {
+    transform: rotateY(-90deg);
+    box-shadow: -20px 0 30px rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    transform: rotateY(-180deg);
     opacity: 0.7;
     box-shadow: none;
   }
