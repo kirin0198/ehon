@@ -27,9 +27,7 @@ test('persistence: localStorage に Settings が保存され reload で復元さ
   await expect(page.locator('html')).toHaveClass(/night/, { timeout: 5000 });
 });
 
-test('persistence: 旧キー eh.tweaks が残存していても新コードはそれを読まない', async ({
-  page,
-}) => {
+test('persistence: 旧キー eh.tweaks が残存していても新コードはそれを読まない', async ({ page }) => {
   // ページロード前に旧キーを仕込む (React マウント前に実行されることが保証される)
   await page.addInitScript(() => {
     localStorage.setItem(
