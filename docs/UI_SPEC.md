@@ -10,6 +10,7 @@
 >   - 2026-05-04: Tweaks パネル / ViewerBar の本番向け縮小 (analyst / 文字サイズ・アクセント色・フォントの UI 削除と固定化)
 >   - 2026-05-05: Tweaks パネル / TweaksLauncher を完全削除 (developer / SCR-003 削除、本棚/ビュアー画面の Tweaks ボタン記述を全消去)
 >   - 2026-05-06: ビュアーのタッチスワイプ Phase 1 (developer / SCR-002 Interactions の「画面半分タップ」を「左/右スワイプ」に置換、Accessibility 節に補足)
+>   - 2026-05-05: ページめくりアニメ強化 Phase 2 (developer / Animations 表に perspective / box-shadow / easing を反映)
 
 ## 1. Design Policy
 
@@ -394,21 +395,25 @@ flowchart LR
 
 ## 8. Animations / Transitions
 
-| 名前 | 適用先 | duration | easing | reduced-motion |
-|------|--------|----------|--------|----------------|
-| `viewerIn` | ビュアー入場 | 0.35s | ease | 停止 (opacity 即時 1) |
-| `flipNextLeft` | ViewerA 次ページ | 0.55s | ease-in | 停止 (即時切替) |
-| `flipNextRightFade` | ViewerA 次ページ右フェード | 0.55s | ease-out | 停止 |
-| `flipPrevRight` | ViewerA 前ページ | 0.55s | ease-in | 停止 |
-| `slideInRight` | ViewerB 次ページ背景 | 0.5s | ease | 停止 |
-| `slideInRightCard` | ViewerB 次ページカード | 0.5s | ease | 停止 |
-| `slideInLeft` / `slideInLeftCard` | ViewerB 前ページ | 0.5s | ease | 停止 |
-| `floaty` | ViewerB 背景 emoji | 4s infinite | ease-in-out | 停止（位置固定） |
-| カードホバーリフト | ShelfA / ShelfB | 0.2s | ease | 停止（hover: none） |
-| ページめくりアニメ全般 | ViewerA / ViewerB | — | — | `@media (prefers-reduced-motion: reduce)` で `animation: none` |
+| 名前 | 適用先 | duration | easing | 中間キー | reduced-motion |
+|------|--------|----------|--------|----------|----------------|
+| `viewerIn` | ビュアー入場 | 0.35s | ease | — | 停止 (opacity 即時 1) |
+| `flipNextLeft` | ViewerA 次ページ | 0.55s | ease-in | 50%: `box-shadow: -20px 0 30px rgba(0,0,0,0.3)` (紙の厚み) | 停止 (即時切替) |
+| `flipNextRightFade` | ViewerA 次ページ右フェード | 0.55s | ease-out | 40%: `opacity: 0` (フェード開始を前倒し) | 停止 |
+| `flipPrevRight` | ViewerA 前ページ | 0.55s | ease-in | 50%: `box-shadow: 20px 0 30px rgba(0,0,0,0.3)` (紙の厚み) | 停止 |
+| `slideInRight` | ViewerB 次ページ背景 | 0.5s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | — | 停止 |
+| `slideInRightCard` | ViewerB 次ページカード | 0.5s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | — | 停止 |
+| `slideInLeft` / `slideInLeftCard` | ViewerB 前ページ | 0.5s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | — | 停止 |
+| `floaty` | ViewerB 背景 emoji | 4s infinite | ease-in-out | — | 停止（位置固定） |
+| カードホバーリフト | ShelfA / ShelfB | 0.2s | ease | — | 停止（hover: none） |
+| ページめくりアニメ全般 | ViewerA / ViewerB | — | — | — | `@media (prefers-reduced-motion: reduce)` で `animation: none` |
 
+> **Phase 2 追加 (2026-05-05):** `.book-a` に `perspective: 1500px` + `transform-style: preserve-3d` を付与。
+> 子要素の `rotateY` アニメが立体的に表示される (AC2-2)。`prefers-reduced-motion: reduce` 時は
+> `reduced-motion.css` の `animation: none !important` により中間キーのキーフレームを含む全アニメが停止 (AC2-4)。
+>
 > CSS は `styles/ehon.css` の `@keyframes` をそのまま `src/styles/` に移植する。
-> reduced-motion 対応は新規追加: `@media (prefers-reduced-motion: reduce) { .book-a, .book-b, .eh-viewer, .book-b-bg-emoji { animation: none !important; transform: none !important; } }`
+> reduced-motion 対応は `src/styles/reduced-motion.css` で統合管理 (`@media (prefers-reduced-motion: reduce) { ... animation: none !important; }`)。
 
 ---
 
