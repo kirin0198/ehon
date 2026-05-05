@@ -1,5 +1,6 @@
-// TC-E2E-003: タッチスワイプでビュアーのページ送り (Phase 1 / ADR-010)
-// - react-swipeable (delta=50) で左/右スワイプを検出
+// TC-E2E-003: タッチスワイプでビュアーのページ送り (Phase 1 / ADR-010 / RTL: ADR-012)
+// - react-swipeable (delta=50) で右/左スワイプを検出 (右綴じ仕様)
+// - 右スワイプ = 次ページ / 左スワイプ = 前ページ (ACR-2 / ACR-6)
 // - 閾値未満 (30px) はページ送りしない
 // - 縦スワイプ (上下) はページ送りしない
 // - 500ms フリップロック中の 2 回目スワイプは無視される
@@ -120,7 +121,7 @@ test.describe('viewer-swipe: ViewerA', () => {
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
   });
 
-  test('左スワイプ (70px) → 次ページに進む', async ({ page, isMobile }) => {
+  test('右スワイプ (70px) → 次ページに進む', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'タッチデバイスのみ実行');
 
     const stage = page.locator('.eh-viewer-stage').first();
@@ -130,7 +131,8 @@ test.describe('viewer-swipe: ViewerA', () => {
     // 最初は「まえのページ」無効 (1 ページ目)
     await expect(prevBtn).toBeEnabled({ timeout: 1000 });
 
-    await swipe(page, stage, -70, 0);
+    // 右綴じ仕様: 右スワイプ (+70px) → 次ページ (ACR-2)
+    await swipe(page, stage, 70, 0);
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
     // 2 ページ目に進んだので pageIndex が増加している
     // (progressbar の aria-valuenow で確認)
@@ -139,21 +141,21 @@ test.describe('viewer-swipe: ViewerA', () => {
     expect(Number(valuenow)).toBeGreaterThanOrEqual(3);
   });
 
-  test('右スワイプ (70px) → 前ページに戻る', async ({ page, isMobile }) => {
+  test('左スワイプ (70px) → 前ページに戻る', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'タッチデバイスのみ実行');
 
     const stage = page.locator('.eh-viewer-stage').first();
     const nextBtn = page.getByRole('button', { name: 'つぎのページ' });
 
-    // まず左スワイプで 2 ページ目へ
-    await swipe(page, stage, -70, 0);
+    // まず右スワイプで 2 ページ目へ (右綴じ仕様)
+    await swipe(page, stage, 70, 0);
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
 
     const progressBefore = page.getByRole('progressbar');
     const before = Number(await progressBefore.getAttribute('aria-valuenow'));
 
-    // 右スワイプで戻る
-    await swipe(page, stage, 70, 0);
+    // 左スワイプ (-70px) で前ページに戻る (ACR-2)
+    await swipe(page, stage, -70, 0);
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
 
     const after = Number(await progressBefore.getAttribute('aria-valuenow'));
@@ -167,8 +169,8 @@ test.describe('viewer-swipe: ViewerA', () => {
     const progress = page.getByRole('progressbar');
     const before = Number(await progress.getAttribute('aria-valuenow'));
 
-    // 30px は閾値 50px 未満 → 反応しない
-    await swipe(page, stage, -30, 0);
+    // 30px は閾値 50px 未満 → 反応しない (方向に依存しない)
+    await swipe(page, stage, 30, 0);
     await page.waitForTimeout(300);
 
     const after = Number(await progress.getAttribute('aria-valuenow'));
@@ -197,11 +199,11 @@ test.describe('viewer-swipe: ViewerA', () => {
     const progress = page.getByRole('progressbar');
     const before = Number(await progress.getAttribute('aria-valuenow'));
 
-    // 1 回目のスワイプ (フリップロック開始)
-    await swipe(page, stage, -70, 0);
+    // 1 回目のスワイプ (フリップロック開始) — 右スワイプ=次ページ (RTL 仕様)
+    await swipe(page, stage, 70, 0);
     // フリップロック中 (200ms) に 2 回目スワイプ → 無視されるはず
     await page.waitForTimeout(200);
-    await swipe(page, stage, -70, 0);
+    await swipe(page, stage, 70, 0);
     // フリップロック解除を待つ
     const nextBtn = page.getByRole('button', { name: 'つぎのページ' });
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
@@ -236,14 +238,15 @@ test.describe('viewer-swipe: ViewerB', () => {
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
   });
 
-  test('ViewerB: 左スワイプ (70px) → 次ページに進む', async ({ page, isMobile }) => {
+  test('ViewerB: 右スワイプ (70px) → 次ページに進む', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'タッチデバイスのみ実行');
 
     const stage = page.locator('.eh-viewer-stage').first();
     const progress = page.getByRole('progressbar');
     const before = Number(await progress.getAttribute('aria-valuenow'));
 
-    await swipe(page, stage, -70, 0);
+    // 右綴じ仕様: 右スワイプ (+70px) → 次ページ (ACR-6)
+    await swipe(page, stage, 70, 0);
     const nextBtn = page.getByRole('button', { name: 'つぎのページ' });
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
 
@@ -251,21 +254,21 @@ test.describe('viewer-swipe: ViewerB', () => {
     expect(after).toBeGreaterThan(before);
   });
 
-  test('ViewerB: 右スワイプ (70px) → 前ページに戻る', async ({ page, isMobile }) => {
+  test('ViewerB: 左スワイプ (70px) → 前ページに戻る', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'タッチデバイスのみ実行');
 
     const stage = page.locator('.eh-viewer-stage').first();
     const nextBtn = page.getByRole('button', { name: 'つぎのページ' });
     const progress = page.getByRole('progressbar');
 
-    // まず左スワイプで進む
-    await swipe(page, stage, -70, 0);
+    // まず右スワイプで次ページへ (右綴じ仕様)
+    await swipe(page, stage, 70, 0);
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
 
     const before = Number(await progress.getAttribute('aria-valuenow'));
 
-    // 右スワイプで戻る
-    await swipe(page, stage, 70, 0);
+    // 左スワイプ (-70px) で前ページに戻る (ACR-6)
+    await swipe(page, stage, -70, 0);
     await expect(nextBtn).toBeEnabled({ timeout: 3000 });
 
     const after = Number(await progress.getAttribute('aria-valuenow'));

@@ -38,7 +38,7 @@ Status: in-progress
 - [x] TASK-3-2: ViewerA.tsx のスワイプハンドラ (`onSwipedLeft` / `onSwipedRight`) を反転 | Target file: `src/components/viewers/ViewerA.tsx`
 - [x] TASK-3-3: ViewerB.tsx のスワイプハンドラを反転（操作の一貫性 / ACR-6） | Target file: `src/components/viewers/ViewerB.tsx`
 - [x] TASK-3-4: ehon.css のキーフレームを改名 + 回転 / 影方向反転（`flipNextLeft` → `flipNextRight` / `flipPrevRight` → `flipPrevLeft` / `flipNextRightFade` → `flipNextLeftFade`） | Target file: `src/styles/ehon.css`
-- [ ] TASK-3-5: viewer-swipe.spec.ts の期待値を反転（左=前 / 右=次） | Target file: `tests/e2e/viewer-swipe.spec.ts`
+- [x] TASK-3-5: viewer-swipe.spec.ts の期待値を反転（左=前 / 右=次） | Target file: `tests/e2e/viewer-swipe.spec.ts`
 - [ ] TASK-3-6: viewer-keyboard.spec.ts の **据え置き確認**（修正不要 / OS 標準維持の検証） | Target file: `tests/e2e/viewer-keyboard.spec.ts`
 - [ ] TASK-3-7: SPEC.md / UI_SPEC.md 差分更新（差分方針は ARCHITECTURE.md §10 末尾参照） | Target file: `docs/SPEC.md`, `docs/UI_SPEC.md`
 - [ ] TASK-3-8: 検証（typecheck / lint / format / unit / e2e / build / 手動視覚レビュー / reduced-motion 確認） | Target: ローカル + CI
