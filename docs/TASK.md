@@ -6,7 +6,7 @@
 
 ## Phase: Tweaks 機能の完全削除 (Phase 1〜5)
 
-Last updated: 2026-05-05T02:00:00
+Last updated: 2026-05-05T03:00:00
 Status: in-progress
 Branch: feat/tweaks-simplification (PR #3 継続使用 / ユーザー判断)
 
@@ -24,10 +24,10 @@ Branch: feat/tweaks-simplification (PR #3 継続使用 / ユーザー判断)
 - [x] TASK-2-4: `tests/unit/App.smoke.test.tsx` を TweaksProvider 不要前提に修正 | Target: tests/unit/App.smoke.test.tsx
 
 ### Phase 3: 旧 Tweaks 関連コード削除
-- [ ] TASK-3-1: `src/components/tweaks/` ディレクトリ全体を git rm (5 ファイル + ディレクトリ) | Target: src/components/tweaks/
-- [ ] TASK-3-2: `src/stores/tweaks-context.tsx` / `tweaks-reducer.ts` / `tweaks-defaults.ts` を git rm | Target: src/stores/
-- [ ] TASK-3-3: `src/types/tweaks.ts` を git rm | Target: src/types/tweaks.ts
-- [ ] TASK-3-4: `tests/unit/tweaks-context.test.tsx` / `tweaks-reducer.test.ts` / `TweaksPanel.test.tsx` を git rm | Target: tests/unit/
+- [x] TASK-3-1: `src/components/tweaks/` ディレクトリ全体を git rm (5 ファイル + ディレクトリ) | Target: src/components/tweaks/
+- [x] TASK-3-2: `src/stores/tweaks-context.tsx` / `tweaks-reducer.ts` / `tweaks-defaults.ts` を git rm | Target: src/stores/
+- [x] TASK-3-3: `src/types/tweaks.ts` を git rm | Target: src/types/tweaks.ts
+- [x] TASK-3-4: `tests/unit/tweaks-context.test.tsx` / `tweaks-reducer.test.ts` / `TweaksPanel.test.tsx` を git rm | Target: tests/unit/
 
 ### Phase 4: E2E + ドキュメント更新
 - [ ] TASK-4-1: `tests/e2e/persistence.spec.ts` を新キー `eh.settings` ベースに書き換え + 旧 `eh.tweaks` 残存ケース 1 本は維持 | Target: tests/e2e/persistence.spec.ts
