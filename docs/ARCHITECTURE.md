@@ -1,18 +1,20 @@
 # Architecture Design: えほんやさん（Ehon）
 
-> Source: SPEC.md (2026-05-04 / Tweaks 縮小版 → 2026-05-05 で Tweaks 完全削除)
-> Source: UI_SPEC.md (2026-05-04 / Tweaks 縮小版 → 2026-05-05 で Tweaks 完全削除)
+> Source: SPEC.md (2026-05-04 / Tweaks 縮小版 → 2026-05-05 で Tweaks 完全削除 / 2026-05-06 で UC-006 にスワイプ追加)
+> Source: UI_SPEC.md (2026-05-04 / Tweaks 縮小版 → 2026-05-05 で Tweaks 完全削除 / 2026-05-06 で SCR-002 にスワイプ追加)
 > Source: DISCOVERY_RESULT.md (2026-05-04) / project-rules.md (2026-05-04)
 > Source: docs/design-notes/tweaks-simplification.md (2026-05-04)
 > Source: docs/design-notes/remove-tweaks-panel.md (2026-05-05)
 > Source: docs/design-notes/page-turn-animation.md (2026-05-05)
+> Source: docs/design-notes/page-turn-animation-phase2.md (2026-05-05)
 > Created: 2026-05-04
-> Last updated: 2026-05-06
+> Last updated: 2026-05-05
 > Update history:
 >   - 2026-05-04: Initial draft (architect / Delivery Flow Light プラン)
 >   - 2026-05-04: Tweaks 機能の本番固定化 (architect / Tweaks 型を 4 フィールドに縮小、CSS 変数同期 useEffect を 2 本削減、ADR-008 追記、実装順序を Phase A〜E に再構成)
 >   - 2026-05-05: Tweaks 機能の完全削除 (architect / TweaksPanel/Launcher/Provider/Context/Reducer 削除、useSettingsStore (custom hook) へ置換、ADR-009 追記、実装順序を Phase 1〜5 に再構成)
 >   - 2026-05-06: タッチスワイプ対応 Phase 1 を追加 (architect / react-swipeable 採用、ADR-010 追記、ViewerA/ViewerB の `.eh-viewer-stage` にスワイプジェスチャ統合、R-018/R-019 追加)
+>   - 2026-05-05: ページめくりアニメ強化 Phase 2 を追加 (architect / CSS only / ADR-011 追記 / `.book-a` への perspective 付与・キーフレームへ box-shadow 追加・ViewerB easing を `cubic-bezier(0.2, 0.8, 0.2, 1)` に統一 / R-021 追加)
 
 ## 1. アーキテクチャ概要
 
@@ -91,7 +93,7 @@ flowchart TB
 > - **Zustand 等の状態管理ライブラリは ADR-009 で明確に却下**。Settings は単一 hook で完結
 > - フォントは Google Fonts URL 直参照（`<link>`）。本番固定化に伴い M PLUS Rounded 1c のみを残し、その他のフォント `<link>` は `index.html` から除去する（ADR-008）
 > - Markdown / 画像処理ライブラリは MVP 不要
-> - **アニメーションライブラリ (Framer Motion / React Spring) は採用しない**: 既存 CSS の `rotateY` で十分。ドラッグ追従が必要になった場合のみ Phase 3 候補として再検討（ADR-010）
+> - **アニメーションライブラリ (Framer Motion / React Spring) は採用しない**: 既存 CSS の `rotateY` / `translateX` で十分。Phase 2 でも CSS のみで強化する（ADR-011）。ドラッグ追従が必要になった場合のみ Phase 3 候補として再検討（ADR-010）
 
 ## 2. ディレクトリ構造
 
@@ -169,7 +171,7 @@ ehon/
 │   └── e2e/
 │       ├── home.spec.ts               # 本棚 → ビュアー → 戻る
 │       ├── viewer-keyboard.spec.ts    # キーボード完結
-│       ├── viewer-swipe.spec.ts       # ★ 新規 (Phase 1 / 2026-05-06): スワイプでページ送り
+│       ├── viewer-swipe.spec.ts       # ★ 既存 (Phase 1 / 2026-05-06): スワイプでページ送り
 │       ├── ruby-toggle.spec.ts        # ふりがな切替
 │       ├── persistence.spec.ts        # localStorage 永続化（新キー eh.settings 対象）
 │       ├── responsive-ipad.spec.ts    # iPad プロファイル
@@ -202,10 +204,15 @@ ehon/
 >
 > **Tweaks 完全削除に伴う削除ファイル（ADR-009 / 完了済）**: `src/components/tweaks/` ディレクトリ全体、`src/stores/tweaks-*.ts(x)` 3 ファイル、`src/types/tweaks.ts`、tweaks 系 unit テスト 3 本。
 >
-> **タッチスワイプ Phase 1 に伴う追加（ADR-010 / 本フェーズ）**:
+> **タッチスワイプ Phase 1 に伴う追加（ADR-010 / 完了済）**:
 > - `package.json` の `dependencies` に `react-swipeable` を追加
 > - `tests/e2e/viewer-swipe.spec.ts` を新規作成（Playwright touch エミュレーションでスワイプによる前後遷移を検証）
 > - 新規モジュール追加は **行わない**: `useSwipeable` を `ViewerA.tsx` / `ViewerB.tsx` 内で直接呼び出し、既存 `useViewerNav.go(±1)` を呼ぶ薄い接合に留める
+>
+> **ページめくりアニメ強化 Phase 2 に伴う変更（ADR-011 / 本フェーズ）**:
+> - 影響範囲は **`src/styles/ehon.css` のキーフレーム / 親要素クラス定義のみ**。React コンポーネント・型定義・hook には変更を加えない
+> - JS ライブラリ追加は **なし**（バンドル増 0 kB）
+> - 既存 `src/styles/reduced-motion.css` の `.book-a, .book-b { animation: none !important; }` 系セレクタが新キーフレームの中間キーも含めて停止するため、reduced-motion 側の追加対応は不要
 
 ## 3. モジュール設計
 
@@ -268,7 +275,7 @@ ehon/
   ```
 - **キーボード**: `ArrowRight` → `go(1)`, `ArrowLeft` → `go(-1)`, `Escape` → `onClose()`
 - **アニメーションロック**: `flippingRef` + `isFlipping` state で 500ms (`FLIP_LOCK_MS`) 間 `go` を抑制
-- **本フェーズ (Phase 1) では改変しない**: スワイプは `useSwipeable` の onSwipedLeft/Right から本フックの `go(±1)` を呼ぶ形で統合する。`isFlipping` 中の `go` 抑制ロジックがそのままスワイプにも適用されるため、追加ロックは不要
+- **本フェーズ (Phase 2) では改変しない**: アニメ強化は CSS のみ。`flipDir` / `isFlipping` の値や duration 500ms（CSS 0.55s に対する余裕分）には触れない
 
 ### スワイプジェスチャ統合（Phase 1 / ADR-010）
 
@@ -318,9 +325,92 @@ flowchart LR
 - キーボード操作（←/→ / Esc）と ◀/▶ ボタンは引き続き動作する（**スワイプは追加手段であり代替ではない**）
 - スワイプは VoiceOver / NVDA など SR ユーザーの操作経路には影響しない
 
-#### Phase 2（将来課題、本フェーズの対象外）
+### ページめくりアニメ強化（Phase 2 / ADR-011）
 
-ページ進行率にジェスチャを連動させる "drag-to-flip" や、めくり中の影 / `perspective` 親要素・キーフレーム強化などの **CSS アニメ表現の改善は別 PR** で扱う。Phase 2 着手時に再度 architect を起動し、設計メモ `docs/design-notes/page-turn-animation.md` の Phase 2 章を再活用する想定。
+紙の厚み・立体感を **CSS only で控えめに表現** する。React コンポーネントや hook は改変せず、既存キーフレームの拡張と親要素への `perspective` 付与で実現する。
+
+#### スコープ（影響ファイル）
+
+- `src/styles/ehon.css`
+  - `.book-a` セレクタに `perspective: 1500px;` + `transform-style: preserve-3d;` を付与
+  - `@keyframes flipNextLeft` / `flipPrevRight` に中間キー (`50%`) を追加し、めくり中に `box-shadow` を表示
+  - `@keyframes flipNextRightFade` のフェード開始タイミングを `60% → 40%` に前倒し
+  - `.book-b.flipping-*` 配下の easing を `ease` → `cubic-bezier(0.2, 0.8, 0.2, 1)` に統一（`slideInRight` / `slideInLeft` / `slideInRightCard` / `slideInLeftCard` の 4 適用箇所）
+- `src/styles/reduced-motion.css` — **変更なし**（既存の `.book-a, .book-b { animation: none !important; }` が中間キー含むキーフレーム全体を停止するため）
+- React コンポーネント (`ViewerA.tsx` / `ViewerB.tsx` / `useViewerNav.ts`) — **変更なし**
+
+#### 確定パラメータ
+
+| パラメータ | 確定値 | 根拠 |
+|------------|--------|------|
+| `perspective` (`.book-a`) | **`1500px`** | analyst 案を採用。900px〜1024px 幅の見開き要素に対し、視差 ≒ 35° 程度の自然な奥行きを与える。値が小さすぎる (≤800px) と歪みが強くなり、大きすぎる (≥2500px) と立体感が消える |
+| `transform-style` (`.book-a`) | **`preserve-3d`** | 子要素の `rotateY` を平面投影せず立体保持するため必須。`perspective` と対で指定 |
+| `box-shadow` (中間キー 50%) | **`-20px 0 30px rgba(0, 0, 0, 0.3)` (next)**<br>**`20px 0 30px rgba(0, 0, 0, 0.3)` (prev)** | analyst 案を採用。0.3 の不透明度は昼モード (`--paper`) でも夜モード (`--night-paper`) でも識別可能で、かつ「めくり感」を主張しすぎない。blur=30px で柔らかい影縁になる |
+| `flipNextRightFade` フェード開始 | **`40%`** (`60%` から前倒し) | analyst 案を採用。0.55s × 0.4 = 0.22s 時点でフェード開始。回転中盤の影と同期して新ページが立ち上がる視覚情報を強化 |
+| ViewerB easing | **`cubic-bezier(0.2, 0.8, 0.2, 1)`** | analyst 案を採用。Material Design の "standard easing" と同等の余韻あり（終端でゆっくり止まる）。線形 ease より「紙の物体感」が出る。bg / card 両方に同じ値を当てることでズレを防ぐ |
+
+> **CSS 例（最終形のイメージ）**:
+> ```css
+> .book-a {
+>   perspective: 1500px;
+>   transform-style: preserve-3d;
+> }
+> @keyframes flipNextLeft {
+>   0%   { transform: rotateY(0); box-shadow: none; }
+>   50%  {
+>     transform: rotateY(-90deg);
+>     box-shadow: -20px 0 30px rgba(0, 0, 0, 0.3);
+>   }
+>   100% { transform: rotateY(-180deg); opacity: 0.7; box-shadow: none; }
+> }
+> @keyframes flipPrevRight {
+>   0%   { transform: rotateY(0); box-shadow: none; }
+>   50%  {
+>     transform: rotateY(90deg);
+>     box-shadow: 20px 0 30px rgba(0, 0, 0, 0.3);
+>   }
+>   100% { transform: rotateY(180deg); opacity: 0.7; box-shadow: none; }
+> }
+> @keyframes flipNextRightFade {
+>   0%   { opacity: 0; }
+>   40%  { opacity: 0; }
+>   100% { opacity: 1; }
+> }
+> .book-b.flipping-next .book-b-bg {
+>   animation: slideInRight 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+> }
+> .book-b.flipping-next .book-b-text-card {
+>   animation: slideInRightCard 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+> }
+> .book-b.flipping-prev .book-b-bg {
+>   animation: slideInLeft 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+> }
+> .book-b.flipping-prev .book-b-text-card {
+>   animation: slideInLeftCard 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+> }
+> ```
+
+#### duration / タイミング不変条件
+
+- `flipNextLeft` / `flipPrevRight` / `flipNextRightFade` の **duration は 0.55s のまま据え置き**（`useViewerNav` の `FLIP_LOCK_MS=500ms` との整合）
+- `slideInRight` / `slideInLeft` / `slideInRightCard` / `slideInLeftCard` の **duration は 0.5s のまま据え置き**
+- 既存 E2E (`viewer-keyboard.spec.ts` / `viewer-swipe.spec.ts` / `home.spec.ts`) は timing に依存した assertion を持たないため、duration 不変なら影響なし
+
+#### reduced-motion との関係
+
+- `src/styles/reduced-motion.css` は `.book-a, .book-b { animation: none !important; }` の形でキーフレーム全体を無効化している
+- `box-shadow` はキーフレーム内で animate されるプロパティなので、`animation: none` が効けば中間キーごと停止する → 影は描画されない
+- `perspective` は静的プロパティで「動かない」ため reduced-motion での停止対象外。設定が残っていても rotateY 自体が停止すれば視差は発生しないので副作用は出ない
+- 結論: **reduced-motion.css への追記は不要**（AC2-4 を既存実装で満たす）
+
+#### 既存抽象との関係
+
+- React コンポーネント / `useViewerNav` / 設定ストアは **一切触れない**
+- スワイプ (Phase 1) との競合なし: スワイプは `useViewerNav.go(±1)` を呼ぶだけで、CSS アニメ表現には依存しない
+
+#### Phase 3（将来課題、本フェーズの対象外）
+
+ページ進行率にジェスチャを連動させる "drag-to-flip" や、3D 紙めくりライブラリ (`react-pageflip` 等) の導入、ページ厚みの擬似要素 (`::before`) 表現は **Phase 3 以降** で扱う。Phase 3 着手時に再度 architect を起動し、設計メモ `docs/design-notes/page-turn-animation.md` の Phase 3 候補章を再活用する想定。
 
 ### `IllustWithFallback` (src/components/common/IllustWithFallback.tsx)
 - **責務**: 挿絵画像の表示と onError フォールバック
@@ -336,13 +426,13 @@ flowchart LR
 - **責務**: 本棚レイアウト 2 バリアント。タグフィルター結果で物語を表示
 
 ### `ViewerA` / `ViewerB` (src/components/viewers/*.tsx)
-- **責務**: ビュアーレイアウト 2 バリアント。`useViewerNav` で状態管理し、本フェーズから `useSwipeable` でタッチスワイプを受け付ける
+- **責務**: ビュアーレイアウト 2 バリアント。`useViewerNav` で状態管理し、`useSwipeable` でタッチスワイプを受け付ける
 - **依存**: `useViewerNav`, `useSwipeable` (react-swipeable), `RubyText`, `IllustWithFallback`, `ViewerBar`, `CoverPage`
-- **本フェーズの追加 props はなし**: スワイプは内部実装の追加。外部 API は変更しない
+- **Phase 2 では変更なし**: アニメ強化は CSS 側（`ehon.css`）のみ。Viewer コンポーネントの DOM / props / handler に追加・改変なし
 
 ### `ViewerBar` (src/components/viewers/ViewerBar.tsx)
 - **責務**: ビュアー上部のツールバー
-- **本フェーズでは変更なし**: スワイプ装着先からは外す（タップ衝突回避）
+- **Phase 2 では変更なし**
 
 ### `ErrorBoundary` (src/components/common/ErrorBoundary.tsx)
 - **責務**: React クラッシュ時に本棚へ復帰可能にする（IR-008）
@@ -457,6 +547,9 @@ flowchart LR
 - `react-swipeable` は通常の npm 依存として bundle に含まれるためランタイム取得失敗は発生しない
 - 万が一フックがエラーをスローしても `<ErrorBoundary>` で捕捉され、ボタン / キーボードのナビは継続して動作する
 
+### Phase 2 で追加されるリスク
+- 現状なし（CSS のみの変更で、ランタイム例外を引き起こすコードパスはない）
+
 ## 9. テスト戦略
 
 | Test Type | Tool | Coverage Target | Scope |
@@ -466,13 +559,18 @@ flowchart LR
 | E2E | Playwright | 主要動線 7 シナリオ（Phase 1 で +1） | 本棚 / ビュアー / スワイプ / 永続化 / レスポンシブ |
 | Accessibility | axe-core (Playwright) + 手動 | Lighthouse a11y ≥ 95 | 全画面 |
 
-### Phase 1 (タッチスワイプ) に伴うテスト追加 / 修正
+### Phase 2 (CSS アニメ強化) に伴うテスト方針
 
-- **追加 E2E**: `tests/e2e/viewer-swipe.spec.ts`
-  - Playwright の `page.locator('.eh-viewer-stage').dispatchEvent('touchstart' / 'touchmove' / 'touchend')` か、`@playwright/test` の `device` プロファイル + `page.touchscreen.swipe` 相当でスワイプを発火
-  - ケース: (a) 左スワイプで次ページ、(b) 右スワイプで前ページ、(c) 50px 未満のスワイプは反応しない、(d) 縦スワイプは無視される、(e) 500ms ロック中の連続スワイプ 2 回目が無視される
-- **既存 E2E の維持**: `viewer-keyboard.spec.ts` / `home.spec.ts` は既存ケースをそのまま維持し、ボタン / キーボードナビが破壊されていないことを担保（回帰防止）
-- **ユニットテスト**: ViewerA / ViewerB のスワイプ統合は jsdom + @testing-library での touch シミュレーションが煩雑なため E2E に集約する。ただし `useViewerNav` 既存テストは維持
+- **新規 E2E は追加しない**: アニメは見た目のみで挙動・タイミングへの影響なし。既存 7 ケースが破壊されないことだけを CI で確認する
+- **新規 visual regression テストは追加しない**: コスト対効果が低い。将来 Standard / Full プランで visual-designer を起動した場合に再評価
+- **既存 E2E の維持**: `home.spec.ts` / `viewer-keyboard.spec.ts` / `viewer-swipe.spec.ts` を retain。duration 不変なため timing 由来の flake は発生しない想定
+- **手動視覚レビュー**: developer がローカル `pnpm dev` で実機確認（昼/夜モード × ViewerA/B × 次/前ページ送り の 8 パターン目視）
+- **bundle size 計測**: `pnpm build` 後の gzip サイズを記録し、AC2-6（増加 0 kB）を担保
+
+### Phase 1 (タッチスワイプ) に伴うテスト追加 / 修正（既存 / 完了済）
+
+- **追加 E2E**: `tests/e2e/viewer-swipe.spec.ts`（5 ケース）
+- **既存 E2E の維持**: `viewer-keyboard.spec.ts` / `home.spec.ts` 既存ケースを維持
 
 ### E2E テストポリシー（HAS_UI: true）
 
@@ -482,7 +580,7 @@ flowchart LR
 - **対象シナリオ**:
   1. `home.spec.ts`: 本棚 → 物語選択 → 表紙 → 全ページ閲覧 → 戻る
   2. `viewer-keyboard.spec.ts`: マウスを使わず本棚 → ビュアー → ←/→ → Esc が完了
-  3. `viewer-swipe.spec.ts` (★ Phase 1 新規): タッチスワイプで前後ページ送り
+  3. `viewer-swipe.spec.ts` (Phase 1): タッチスワイプで前後ページ送り
   4. `ruby-toggle.spec.ts`: ふりがな切替で `<rt>` の可視性が変わる
   5. `persistence.spec.ts`: Settings 4 キー変更 → リロード → 復元
   6. `responsive-ipad.spec.ts`: iPad プロファイルでレイアウト崩れなし、`100dvh` 適用確認
@@ -490,78 +588,85 @@ flowchart LR
 
 ## 10. 実装順序 / 依存関係
 
-> **Phase 1 (タッチスワイプ対応) — 本フェーズで対象**
+> **Phase 2 (ページめくりアニメ強化 / CSS only) — 本フェーズで対象**
 >
-> ブランチ: `feat/swipe-gesture` (main から切る。最初の implementation-tier agent (developer) が作成)
-> 関連: `docs/design-notes/page-turn-animation.md` Phase 1 章
-> 対応 Issue: #5
+> ブランチ: `feat/page-turn-anim-phase2` (main から切る。最初の implementation-tier agent (developer) が作成)
+> 関連: `docs/design-notes/page-turn-animation-phase2.md`
+> 対応 Issue: #7
 
 ```
-Phase 1: タッチスワイプ対応 (react-swipeable)
-  └─ TASK-1-1: 依存追加
-                pnpm add react-swipeable
-                package.json / pnpm-lock.yaml の更新確認
+Phase 2: ページめくりアニメ強化 (CSS only)
+  └─ TASK-2-1: .book-a に perspective 付与
+                src/styles/ehon.css
+                - .book-a セレクタに perspective: 1500px / transform-style: preserve-3d を追加
+                - 子要素の rotateY 立体保持の準備
                 (依存なし。最初に実行)
-  └─ TASK-1-2: ViewerA にスワイプ統合
-                src/components/viewers/ViewerA.tsx
-                - useSwipeable をインライン import
-                - .eh-viewer-stage 相当のステージルートにハンドラを bind
-                - onSwipedLeft → go(1), onSwipedRight → go(-1), delta=50
-                - preventScrollOnSwipe=false, trackMouse=false
-                (TASK-1-1 後)
-  └─ TASK-1-3: ViewerB にスワイプ統合
-                src/components/viewers/ViewerB.tsx
-                - 同上の設定で本文ステージにハンドラを bind
-                - ViewerBar には絶対に装着しないことを確認
-                (TASK-1-1 後 / TASK-1-2 と並行可)
-  └─ TASK-1-4: E2E テスト追加
-                tests/e2e/viewer-swipe.spec.ts
-                - 左/右スワイプ・閾値未満・縦スワイプ・連続スワイプ (500ms ロック) の 5 ケース
-                (TASK-1-2 / 1-3 後)
-  └─ TASK-1-5: ドキュメント更新 (developer が実施)
-                - SPEC.md: UC-006 「ページを送る・戻す」に「スワイプ」追加 + 受入基準追記
-                  受入基準: 50px 以上の左右スワイプで前後ページ遷移 / 500ms ロック中スワイプ無視 / 垂直スワイプ無視
-                - UI_SPEC.md: SCR-002 Interactions テーブル L293-294 を「左/右スワイプで前後ページ」に置換
-                  Accessibility 節に「キーボードとボタンは引き続き使用可能 (スワイプは追加手段)」を明記
-                  Animations 節は変更なし (アニメは Phase 2)
-                - 詳細は本ファイル §10 末尾「SPEC.md / UI_SPEC.md 差分更新方針 (Phase 1)」を参照
-                (TASK-1-2 / 1-3 後 / TASK-1-4 と並行可)
-  └─ TASK-1-6: 検証
+  └─ TASK-2-2: flipNextLeft / flipPrevRight キーフレームに box-shadow 中間キー追加
+                src/styles/ehon.css
+                - 50% に rotateY(±90deg) + box-shadow(±20px 0 30px rgba(0,0,0,0.3)) を挿入
+                - 0% / 100% で box-shadow: none に戻す
+                (TASK-2-1 後 / 並行可)
+  └─ TASK-2-3: flipNextRightFade のフェード開始タイミング調整
+                src/styles/ehon.css
+                - 60% → 40% に前倒し
+                (TASK-2-1 と並行可)
+  └─ TASK-2-4: ViewerB の easing を cubic-bezier に統一
+                src/styles/ehon.css
+                - .book-b.flipping-next .book-b-bg / .book-b-text-card
+                - .book-b.flipping-prev .book-b-bg / .book-b-text-card
+                  の 4 行を ease → cubic-bezier(0.2, 0.8, 0.2, 1) に変更
+                (TASK-2-1〜2-3 と並行可)
+  └─ TASK-2-5: prefers-reduced-motion 動作確認
+                既存 src/styles/reduced-motion.css の挙動確認のみ
+                - .book-a / .book-b の animation: none !important が新中間キーも停止することを目視確認
+                - reduced-motion.css への追記は **不要**（既存セレクタで網羅）
+                - 不要なら chore: コメント追加のみで完了
+                (TASK-2-1〜2-4 後)
+  └─ TASK-2-6: SPEC.md / UI_SPEC.md / ARCHITECTURE.md 更新
+                - SPEC.md: UC-006 受入基準に「ページめくり時に立体感のあるアニメーションが視覚的に確認できる（reduced-motion 時は除外）」を追記。Update history に 2026-05-05 行を追加
+                - UI_SPEC.md: §8 Animations / Transitions 表に Phase 2 の補足列（perspective / box-shadow / easing）を追記。reduced-motion 節は変更なし。Update history に 2026-05-05 行を追加
+                - ARCHITECTURE.md: 本ファイル §3「ページめくりアニメ強化」節と ADR-011 が既に追記済。developer は **再編集不要**。コミット時に本ファイルもステージに含めるだけでよい
+                - 詳細は本ファイル §10 末尾「SPEC.md / UI_SPEC.md 差分更新方針 (Phase 2)」を参照
+                (TASK-2-1〜2-5 後 / 並行可)
+  └─ TASK-2-7: 検証
                 - pnpm typecheck / pnpm lint / pnpm format:check / pnpm test 全 pass
-                - pnpm test:e2e (主要シナリオ + 新 swipe ケース) pass
-                - pnpm build でバンドルサイズ計測 (raw / gzip)、PR 説明に記載
-                  AC-6: gzip +15 kB 以内が目安。react-swipeable は約 +4 kB
-                (TASK-1-1〜1-5 後 / 最終)
+                - pnpm test:e2e (主要シナリオ + 既存 swipe / keyboard ケース) pass
+                - pnpm build でバンドルサイズ計測 (raw / gzip)。AC2-6: 増加 0 kB
+                - 手動視覚レビュー (昼/夜 × ViewerA/B × 次/前 = 8 パターン目視)
+                  - 中間キーの影が紙の厚みとして見える
+                  - perspective により ViewerA の rotateY が立体感を持つ
+                  - ViewerB の slide が余韻のある動きになる
+                - prefers-reduced-motion: reduce 環境で全アニメが停止することを DevTools rendering タブで確認
+                (TASK-2-1〜2-6 後 / 最終)
 ```
 
-> commit 粒度の目安（design-notes Phase 1 §7 に準拠）:
-> - `chore: react-swipeable を依存追加 (TASK-1-1)`
-> - `feat: ViewerA/B にタッチスワイプでページ送りを実装 (TASK-1-2 / 1-3)`
-> - `test: スワイプ E2E (viewer-swipe.spec.ts) を追加 (TASK-1-4)`
-> - `docs: SPEC.md / UI_SPEC.md / ARCHITECTURE.md にスワイプ仕様を反映 (TASK-1-5)`
+> commit 粒度の目安:
+> - `style: .book-a に perspective を付与し flipping キーフレームに box-shadow 中間キーを追加 (TASK-2-1 / 2-2 / 2-3)`
+> - `style: ViewerB の slide easing を cubic-bezier(0.2, 0.8, 0.2, 1) に統一 (TASK-2-4)`
+> - `docs: SPEC.md / UI_SPEC.md / ARCHITECTURE.md にページめくりアニメ強化 Phase 2 を反映 (TASK-2-6)`
+>
+> ※ TASK-2-5 は実装変更なしのため確認のみ。`chore:` コメント追加で commit を立てるか、TASK-2-2 のコミットに含めて済ませても可。
 
-### SPEC.md 差分更新方針（TASK-1-5 委譲分）
-
-| 節 | 変更内容 |
-|----|----------|
-| Update history | `2026-05-06: タッチスワイプ Phase 1 (developer / UC-006 にスワイプ操作追加 / 受入基準追記)` を追記 |
-| 1. Scope (IN) | 「ページ送り（ボタン / キーボード ←/→ / **タップ**）」 → 「ページ送り（ボタン / キーボード ←/→ / **タッチスワイプ**）」 |
-| 4. UC-006 正常フロー | 「ナビボタン (◀/▶) / キーボード (←/→) / タップ（画面左右半分）」 → 「ナビボタン (◀/▶) / キーボード (←/→) / タッチスワイプ (左/右)」に変更（実装されていなかった「画面半分タップ」を「スワイプ」に置換） |
-| 4. UC-006 受入基準 | 以下を追記:<br/>- 50px 以上の左/右スワイプで前/次ページに遷移する<br/>- 500ms のフリップロック中はスワイプも無視される<br/>- 垂直方向のスワイプは無視される（縦スクロールを阻害しない）<br/>- スワイプはタッチデバイスで機能（`trackTouch=true`）。マウスでは反応しない（`trackMouse=false`） |
-| 11. 受入条件サマリー | 「(2026-05-06 追加) タブレット / スマホでスワイプによるページ送りが機能する (左→次 / 右→前)」を追記 |
-
-### UI_SPEC.md 差分更新方針（TASK-1-5 委譲分）
+### SPEC.md 差分更新方針（Phase 2 / TASK-2-6 委譲分）
 
 | 節 | 変更内容 |
 |----|----------|
-| Update history | `2026-05-06: ビュアーのタッチスワイプ Phase 1 (developer / SCR-002 Interactions の「画面半分タップ」を「左/右スワイプ」に置換、Accessibility 節に補足)` を追記 |
-| 4. SCR-002 Interactions (L293-294) | 「▶ ボタン / → キー / **画面右半分タップ**」 → 「▶ ボタン / → キー / **左スワイプ (タッチ)**」<br/>「◀ ボタン / ← キー / **画面左半分タップ**」 → 「◀ ボタン / ← キー / **右スワイプ (タッチ)**」<br/>※ 「画面半分タップ」は実装されていなかったため、本フェーズでスワイプに置換する |
-| 4. SCR-002 Component Details | 必要に応じて「ステージ要素 (`.eh-viewer-stage` 相当) は `useSwipeable` のターゲット」と注記 |
-| 5. Shared Components | 変更なし（スワイプは Viewer 固有のため Shared 化しない） |
-| 7. Accessibility Requirements (SCR-002) | 「キーボード (←/→/Esc) とナビボタン (◀/▶) は引き続き使用可能。スワイプは追加手段であり、SR / キーボード操作の代替ではない」を追記 |
-| 8. Animations / Transitions | 変更なし（アニメ強化は Phase 2 に分離） |
+| Update history | `2026-05-05: ページめくりアニメ強化 Phase 2 (developer / UC-006 受入基準にアニメの立体感を追記 / CSS only / バンドル増 0 kB)` を追記 |
+| 4. UC-006 受入基準 | 既存リストの末尾に以下を追記:<br/>- ページ送り時、めくり中のページに影と奥行き（perspective）が表現され、紙の厚みが視覚的に確認できる<br/>- `prefers-reduced-motion: reduce` のとき、影・perspective を含む全アニメは停止する（既存ルールの再確認）<br/>- バンドルサイズ (gzip) の増加は 0 kB（CSS のみの変更） |
+| 11. 受入条件サマリー | 「(2026-05-05 追加) ページめくり時に紙の厚み・立体感が CSS only のアニメで表現される」を追記 |
 
-> Phase 2（CSS アニメ強化）は本フェーズの対象外。Phase 2 着手時に再度 architect を起動し、設計メモの Phase 2 章を再活用する。
+> **注意**: SCR-001 / 1.Scope (IN) / Tech Stack 節は **変更しない**（実装はキーフレーム拡張のみ、機能は増えない）。
+
+### UI_SPEC.md 差分更新方針（Phase 2 / TASK-2-6 委譲分）
+
+| 節 | 変更内容 |
+|----|----------|
+| Update history | `2026-05-05: ページめくりアニメ強化 Phase 2 (developer / Animations 表に perspective / box-shadow / easing を反映、Phase 2 補足を Animations 節に追記)` を追記 |
+| 8. Animations / Transitions（表） | 既存の `flipNextLeft` / `flipPrevRight` 行に「中間キー (50%) で `box-shadow: ±20px 0 30px rgba(0,0,0,0.3)`」を追加注記。`flipNextRightFade` 行に「フェード開始 60% → 40%」を注記。`slideInRight` / `slideInLeft` / `slideInRightCard` / `slideInLeftCard` の easing 列を `ease` → `cubic-bezier(0.2, 0.8, 0.2, 1)` に更新 |
+| 8. Animations / Transitions（表の下の補足） | `.book-a` に `perspective: 1500px` + `transform-style: preserve-3d` が付与されることを 1〜2 行で明記（rotateY を立体表現するため） |
+| 7. Accessibility Requirements / 共通 | 既存の reduced-motion 記述に変更なし（既存ルールが Phase 2 の中間キーも網羅するため）。**追記不要** |
+
+> **注意**: トークン表 / レスポンシブ / Screen List / Component Details は **変更しない**。Phase 2 はビジュアル装飾のみで、UI 構造は変わらない。
 
 ## 11. 環境 / 設定
 
@@ -573,7 +678,7 @@ Phase 1: タッチスワイプ対応 (react-swipeable)
 
 | File | 役割 | 担当 |
 |------|------|------|
-| `package.json` | 依存・スクリプト（**Phase 1 で `react-swipeable` を追加**） | scaffolder / developer |
+| `package.json` | 依存・スクリプト（**Phase 1 で `react-swipeable` を追加。Phase 2 では追加なし**） | scaffolder / developer |
 | `pnpm-lock.yaml` | ロック | developer |
 | `tsconfig.json` | TS 設定 (strict, jsx: react-jsx) | scaffolder |
 | `tsconfig.node.json` | vite.config 用 | scaffolder |
@@ -607,9 +712,10 @@ Phase 1: タッチスワイプ対応 (react-swipeable)
 | R-015: 古い localStorage キー残存 | low | `normalizeSettings` の whitelist 方式で黙殺 |
 | R-016: 旧 `eh.tweaks` キーがユーザー端末に残留 | very-low | 害なし。クリーンアップは行わない |
 | R-017: useSettingsStore 多重インスタンスで state が分裂 | low | `App` 1 箇所のみ呼び出し props 配布で運用 |
-| **R-018: タッチスワイプが ViewerBar のボタンタップと衝突する** | **medium** | **`useSwipeable` の装着先を ViewerBar から外し、本文ステージ (`.eh-viewer-stage` 相当) のみに限定する。ViewerBar 領域はスワイプ検出から外すことで誤動作を回避（ADR-010 / Phase 1）** |
-| **R-019: タッチスワイプが `<ruby>` 内のテキスト範囲選択や縦スクロールを阻害する** | **medium-low** | **`preventScrollOnSwipe: false` を明示し、縦方向はネイティブのスクロールに任せる。`useSwipeable` はルート要素にイベントハンドラを束ねるだけで `<ruby><rt>` の DOM 構造を改変しないため SR 互換性は保たれる。`delta=50` で 50px 以上の横方向の動きのみ判定し、短いタップ・長押しは反応しない（ADR-010）** |
-| **R-020: react-swipeable のメンテナンス停滞 / 後継ライブラリ未対応** | **low** | **採用時点 (2026-05-06) で週 DL 100 万超、最終リリース 1 年以内、React 18 互換確認済み。Phase 2 で drag-to-flip が必要になった段階で `@use-gesture/react` 等への切替を再評価（ADR-010）** |
+| R-018: タッチスワイプが ViewerBar のボタンタップと衝突する | medium | `useSwipeable` の装着先を ViewerBar から外し、本文ステージ (`.eh-viewer-stage` 相当) のみに限定する。ViewerBar 領域はスワイプ検出から外すことで誤動作を回避（ADR-010 / Phase 1） |
+| R-019: タッチスワイプが `<ruby>` 内のテキスト範囲選択や縦スクロールを阻害する | medium-low | `preventScrollOnSwipe: false` を明示し、縦方向はネイティブのスクロールに任せる。`useSwipeable` はルート要素にイベントハンドラを束ねるだけで `<ruby><rt>` の DOM 構造を改変しないため SR 互換性は保たれる。`delta=50` で 50px 以上の横方向の動きのみ判定し、短いタップ・長押しは反応しない（ADR-010） |
+| R-020: react-swipeable のメンテナンス停滞 / 後継ライブラリ未対応 | low | 採用時点 (2026-05-06) で週 DL 100 万超、最終リリース 1 年以内、React 18 互換確認済み。Phase 2 で drag-to-flip が必要になった段階で `@use-gesture/react` 等への切替を再評価（ADR-010） |
+| **R-021: `perspective` 値 1500px が端末サイズで歪んで見える / 中間キー影が夜モードで見えにくい** | **medium-low** | **手動視覚レビュー (昼/夜 × ViewerA/B × 次/前 = 8 パターン目視) で確認。歪みが強い端末があれば `clamp()` 等の動的指定を Phase 3 で再評価。夜モードでは `--night-paper` の上に rgba(0,0,0,0.3) の影が出るが、`--night-bg` (#1F2440) より十分暗いため識別可能と判定。実測で不足なら blur を 30px → 40px へ調整（ADR-011 / Phase 2）** |
 
 ## 13. Architecture Decision Records (ADR)
 
@@ -618,7 +724,7 @@ Phase 1: タッチスワイプ対応 (react-swipeable)
 （既存のまま。詳細は本ファイル直前のリビジョンを参照）
 
 > ADR-001 (Context + useReducer 採用) は ADR-009 により上書きされた。
-> ADR-008 (Tweaks 本番固定化) → ADR-009 (Tweaks 完全削除) → 本フェーズで ADR-010 (タッチスワイプ採用) を追加。
+> ADR-008 (Tweaks 本番固定化) → ADR-009 (Tweaks 完全削除) → ADR-010 (タッチスワイプ採用 / Phase 1) → ADR-011 (ページめくりアニメ強化 / Phase 2) と進行。
 
 ### ADR-010: タッチスワイプ対応に react-swipeable を採用 (Phase 1)
 
@@ -647,9 +753,44 @@ Phase 1: タッチスワイプ対応 (react-swipeable)
   - **Framer Motion (motion)**: アニメーション + ジェスチャ統合は魅力的だが gzip +30〜40 kB と AC-6 を圧迫。Phase 1 (スワイプのみ) には不要。Phase 2 でも CSS 強化で十分と analyst が判定済み
   - **Hammer.js**: メンテ停滞。React フックラッパも自前で書く必要がある。今から採用する理由が薄い
 - **Phase 2 での見直し方針**:
-  - ジェスチャの進行率に応じてページが追従する "drag-to-flip" を導入する場合は、`react-swipeable` では `eventData.deltaX` 等で擬似的に書けるが UX として不十分
-  - そのフェーズでは `@use-gesture/react` + CSS Custom Properties (`--page-turn-progress`) の組み合わせを再評価する
-  - Phase 2 着手時に architect を再起動し、設計メモ `docs/design-notes/page-turn-animation.md` Phase 2 章を再活用する
+  - 本 Phase 2 は CSS only で進めることがオーナーから確定済み（2026-05-05）。`react-swipeable` の API 範囲 (`onSwipedLeft/Right`) で十分機能しているため切替は **しない**
+  - ジェスチャの進行率に応じてページが追従する "drag-to-flip" を導入する場合（Phase 3 以降）は、`react-swipeable` では `eventData.deltaX` 等で擬似的に書けるが UX として不十分。`@use-gesture/react` + CSS Custom Properties (`--page-turn-progress`) の組み合わせを再評価する
+
+### ADR-011: ページめくりアニメーションの控えめな立体感強化 (Phase 2 / CSS only)
+
+- **Context**:
+  - Phase 1 (PR #6 / Issue #5) でタッチスワイプ対応が完了し、`useViewerNav` の `flipDir` / `isFlipping` / 500ms ロックが安定動作している
+  - Phase 1 ではアニメ本体は既存の `rotateY` / `translateX` ベースのキーフレームを流用したまま。紙の「めくり感」（厚み・影・余韻）は十分に表現できていない
+  - analyst（`docs/design-notes/page-turn-animation-phase2.md`）が CSS だけで完結する控えめな強化案を提示し、`box-shadow` 0.3 / `perspective` 1500px / `cubic-bezier(0.2, 0.8, 0.2, 1)` を仮置き
+  - オーナーから「CSS only / ライブラリ追加なし / 控えめに」が明示確定（2026-05-05）。RTL (Issue #8) は本フェーズの対象外で、本 PR マージ後に別 PR で対応
+- **Decision**:
+  - **影響は `src/styles/ehon.css` のキーフレーム強化のみ** に限定する。React コンポーネント / hook / 型 / 設定ストアには触れない
+  - **`.book-a` 親要素**に `perspective: 1500px;` + `transform-style: preserve-3d;` を付与し、子の `rotateY` を立体的に表示する
+  - **`@keyframes flipNextLeft` / `flipPrevRight`** に中間キー (`50%`) を追加し、`box-shadow: ±20px 0 30px rgba(0, 0, 0, 0.3)` でめくり中の影を表現する。`0%` / `100%` では `box-shadow: none` に戻す
+  - **`@keyframes flipNextRightFade`** のフェード開始タイミングを `60%` から `40%` に前倒しし、回転中盤で新ページが立ち上がる視覚情報を強化する
+  - **ViewerB の slide easing** を `ease` から `cubic-bezier(0.2, 0.8, 0.2, 1)` に統一する（`slideInRight` / `slideInLeft` / `slideInRightCard` / `slideInLeftCard` の 4 適用箇所）。終端でゆっくり止まる Material Design 標準カーブで「紙の物体感」を出す
+  - **duration は不変** (`flipNext*` / `flipPrev*` 0.55s、`slideIn*` 0.5s)。`useViewerNav.FLIP_LOCK_MS=500ms` との整合性と既存 E2E の timing 安定性を保つ
+  - **`prefers-reduced-motion: reduce`** 対応は既存 `src/styles/reduced-motion.css` の `.book-a, .book-b { animation: none !important; }` で網羅される。reduced-motion.css への追記は **不要**
+  - **JS ライブラリは追加しない**（バンドル増 0 kB / AC2-6）
+- **Rationale**:
+  - **コスト最小**: CSS 数十行の編集のみ。React 改変ゼロ、テストコード変更ゼロ、ライブラリ追加ゼロ
+  - **回帰リスク低**: duration が不変なら既存 E2E (`viewer-keyboard.spec.ts` / `viewer-swipe.spec.ts` / `home.spec.ts`) は timing 由来の flake を起こさない (AC2-5)
+  - **a11y 互換**: 既存 reduced-motion ルールが新中間キーも停止する。`<ruby>` 構造は CSS 変更のため影響なし (AC2-4 / R-005)
+  - **立体感の表現は控えめ**: `box-shadow` 不透明度 0.3 と blur 30px は「めくっていることが分かる」最小限の主張。子供向けプロダクトの優しいトーンを崩さない
+  - **`perspective` 1500px の妥当性**: モックの見開きステージは 900〜1100px 幅。`perspective / width ≈ 1.4〜1.7` の範囲は一般的な web の 3D ページめくり実装の標準値域に収まる (1000〜2000px)。`transform-style: preserve-3d` を併用することで子の `rotateY` が平面投影されない
+  - **easing `cubic-bezier(0.2, 0.8, 0.2, 1)`**: Material Design "standard easing" として広く使われる値で、Web プロダクトのユーザー期待値と整合。線形 ease より自然な減速感がある
+  - **将来の拡張余地**: Phase 3 で drag-to-flip / ライブラリ導入を検討する場合も、`perspective` と `box-shadow` のキーフレーム構造はそのまま流用できる
+- **Rejected Alternatives**:
+  - **3D 紙めくりライブラリ (`react-pageflip` 等)**: bundle gzip +20〜40 kB、API が `<HTMLFlipBook>` ラッパ前提で `useViewerNav` 抽象との整合が崩れる。子供向けプロダクトの控えめなトーンには過剰
+  - **Framer Motion のレイアウトアニメ**: gzip +30〜40 kB で AC2-6 違反。本フェーズの「控えめに」要件にも合わない
+  - **ページ厚みの擬似要素 (`::before` でページ束)**: 装飾は綺麗だが ViewerA / ViewerB 両方に手を入れる必要があり、レスポンシブの破綻リスクが高い。Phase 3 候補
+  - **`box-shadow` 不透明度 0.5+**: 目立ちすぎて子供向けプロダクトの柔らかさを損なう。analyst 案の 0.3 を採用
+  - **`perspective` を CSS 変数化 / 動的指定**: 端末別最適化はメリットあるが、本 Phase の控えめスコープを逸脱。Phase 3 で R-021 が現実化したら再評価
+  - **reduced-motion.css に新規セレクタ追加**: 既存ルールが網羅しているため不要。冗長な追加は避ける
+- **Phase 3 での見直し方針**:
+  - R-021 が現実化（端末によって perspective が歪む / 影が見づらい）した場合は、`clamp()` を使った動的 `perspective` 指定や `--shadow-strength` の CSS 変数化を検討
+  - drag-to-flip を導入するなら `@use-gesture/react` + `--page-turn-progress` の組み合わせを再評価（ADR-010 Phase 2 見直し方針も参照）
+  - 3D 紙めくりライブラリは「控えめ」を捨てる判断と一緒に再検討
 
 ---
 
@@ -664,6 +805,6 @@ ARTIFACTS:
 TECH_STACK: TypeScript 5, React 18, Vite 5, pnpm 9, Vitest 1, Playwright 1.44, ESLint 8, Prettier 3, react-swipeable 7
 TECH_STACK_CHANGED: false
 PHASES: 1
-TASKS: 6
+TASKS: 7
 NEXT: developer
 ```
