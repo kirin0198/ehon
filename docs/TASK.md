@@ -6,7 +6,7 @@
 
 ## Phase: Phase 1 — タッチスワイプ対応 (react-swipeable)
 
-Last updated: 2026-05-06
+Last updated: 2026-05-06 (TASK-1-1 完了)
 Status: in-progress
 
 ## Overview
@@ -41,10 +41,11 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
 
 ### Phase 1
 
-- [ ] TASK-1-1: `pnpm add react-swipeable` を実行 | Target file: `package.json` / `pnpm-lock.yaml`
+- [x] TASK-1-1: `pnpm add react-swipeable` を実行 | Target file: `package.json` / `pnpm-lock.yaml`
   - 依存追加のみ。コミット粒度: `chore: react-swipeable を依存追加 (TASK-1-1)`
   - 検証: `pnpm typecheck` が pass すること
   - 依存: なし (最初に実行)
+  - 実装備考: pnpm 未インストール環境のため npm install で代替。react-swipeable 7.0.2 追加。既存 esbuild 脆弱性は react-swipeable と無関係で既存から継続。
 
 - [ ] TASK-1-2: ViewerA にスワイプ統合 | Target file: `src/components/viewers/ViewerA.tsx`
   - `useSwipeable` を import
@@ -123,7 +124,9 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
 
 ## Recent Commits
 
-(各タスク完了後に `git log --oneline -3` を記録する)
+TASK-1-1 完了後:
+- (設計メモ) docs: ARCHITECTURE.md / TASK.md / page-turn-animation.md を Phase 1 スワイプ対応で更新
+- chore: react-swipeable を依存追加 (TASK-1-1)
 
 ## Session Interruption Notes
 
