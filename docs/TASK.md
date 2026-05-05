@@ -6,7 +6,7 @@
 
 ## Phase: Phase 1 — タッチスワイプ対応 (react-swipeable)
 
-Last updated: 2026-05-06 (TASK-1-3 完了)
+Last updated: 2026-05-06 (TASK-1-4 完了)
 Status: in-progress
 
 ## Overview
@@ -60,7 +60,7 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
   - **ViewerBar に装着しないことを必ず確認** (R-018 / ADR-010) → ViewerBar の外側 `.eh-viewer-stage` にのみ bind
   - 依存: TASK-1-1 (TASK-1-2 と並行可)
 
-- [ ] TASK-1-4: スワイプ E2E テスト追加 | Target file: `tests/e2e/viewer-swipe.spec.ts` (新規)
+- [x] TASK-1-4: スワイプ E2E テスト追加 | Target file: `tests/e2e/viewer-swipe.spec.ts` (新規)
   - Playwright の touch エミュレーション (例: WebKit + iPad プロファイル / `page.touchscreen` API / `dispatchEvent('touchstart' / 'touchmove' / 'touchend')`) を使う
   - ケース:
     1. ViewerA で 50px 以上の左スワイプ → 次ページに進む
@@ -124,10 +124,11 @@ CSS アニメ強化 (Phase 2) は本フェーズの対象外。
 
 ## Recent Commits
 
-TASK-1-3 完了後:
+TASK-1-4 完了後:
 - (設計メモ) docs: ARCHITECTURE.md / TASK.md / page-turn-animation.md を Phase 1 スワイプ対応で更新
 - chore: react-swipeable を依存追加 (TASK-1-1)
 - feat: ViewerA/B にタッチスワイプでページ送りを実装 (TASK-1-2 / 1-3)
+- test: スワイプ E2E (viewer-swipe.spec.ts) を追加 (TASK-1-4)
 
 ## Session Interruption Notes
 
