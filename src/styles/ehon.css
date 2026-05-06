@@ -645,6 +645,10 @@ select:focus-visible {
   display: grid;
   place-items: center;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+  /* RTL 化 (ADR-012) で表紙時に CoverPage と同じ親 (.book-a-page.right) に重なる構造になり、
+   * absolute 配置の本要素 (子の placeholderEmoji span 含む) が normal flow の CoverPage CTA の
+   * pointer events を奪って click 不能になる。背景画像はクリック対象ではないため透過する */
+  pointer-events: none;
 }
 
 .book-a-text {
